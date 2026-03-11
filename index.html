@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sauna Finder</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside id="sidebar">
+    <header class="sidebar-header">
+      <h1>Sauna Finder</h1>
+      <p class="subtitle">Finnish public sauna is the gold standard</p>
+    </header>
+
+    <div class="controls">
+      <input type="text" id="search" placeholder="Search saunas..." />
+      <div class="control-row">
+        <select id="sort-by">
+          <option value="finnish">Finnish Affinity</option>
+          <option value="foryou">For You</option>
+          <option value="name">Name A-Z</option>
+          <option value="city">City</option>
+          <option value="price">Price</option>
+        </select>
+        <select id="filter-type">
+          <option value="all">All Types</option>
+          <option value="wood-fired">Wood-fired</option>
+          <option value="smoke">Smoke</option>
+          <option value="electric">Electric</option>
+          <option value="russian-banya">Russian Banya</option>
+          <option value="korean-jjimjilbang">Jjimjilbang</option>
+          <option value="boat">Boat</option>
+          <option value="other">Other</option>
+        </select>
+        <select id="filter-country">
+          <option value="all">All Countries</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Taste Profile (shown when enough ratings) -->
+    <div id="taste-profile" class="taste-profile hidden">
+      <h3 class="collapsible-header" id="taste-toggle">Your Taste Profile <span class="chevron"></span></h3>
+      <div class="collapsible-body" id="taste-body">
+        <div id="taste-bars"></div>
+        <p class="taste-hint" id="taste-hint"></p>
+      </div>
+    </div>
+
+    <div id="sauna-list" class="sauna-list"></div>
+  </aside>
+
+  <!-- Detail Panel -->
+  <div id="detail-panel" class="detail-panel hidden">
+    <button class="close-btn" id="close-detail">&times;</button>
+    <div id="detail-content"></div>
+  </div>
+
+  <!-- Map -->
+  <div id="map"></div>
+
+  <!-- Onboarding Modal -->
+  <div id="onboarding-modal" class="modal hidden">
+    <div class="modal-content onboarding">
+      <h2>Welcome to Sauna Finder</h2>
+      <p>What matters most to you in a sauna? Drag the sliders to set your initial preferences, or skip to use the default Finnish sauna ranking.</p>
+      <div class="pref-sliders">
+        <label>
+          <span class="pref-label">Heat Source <small>(wood &gt; electric)</small></span>
+          <input type="range" min="0" max="10" value="5" data-dim="heatSource" />
+          <span class="pref-value">5</span>
+        </label>
+        <label>
+          <span class="pref-label">Loyly Quality <small>(steam intensity)</small></span>
+          <input type="range" min="0" max="10" value="5" data-dim="loylyQuality" />
+          <span class="pref-value">5</span>
+        </label>
+        <label>
+          <span class="pref-label">Communal Atmosphere</span>
+          <input type="range" min="0" max="10" value="5" data-dim="communalAtmosphere" />
+          <span class="pref-value">5</span>
+        </label>
+        <label>
+          <span class="pref-label">Water Access <small>(lake, sea, plunge)</small></span>
+          <input type="range" min="0" max="10" value="5" data-dim="waterAccess" />
+          <span class="pref-value">5</span>
+        </label>
+        <label>
+          <span class="pref-label">No-Frills Factor</span>
+          <input type="range" min="0" max="10" value="5" data-dim="noFrills" />
+          <span class="pref-value">5</span>
+        </label>
+        <label>
+          <span class="pref-label">Tradition & Roots</span>
+          <input type="range" min="0" max="10" value="5" data-dim="tradition" />
+          <span class="pref-value">5</span>
+        </label>
+        <label>
+          <span class="pref-label">Overall Feeling</span>
+          <input type="range" min="0" max="10" value="5" data-dim="overall" />
+          <span class="pref-value">5</span>
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button id="onboarding-skip" class="btn btn-secondary">Skip (use Finnish defaults)</button>
+        <button id="onboarding-save" class="btn btn-primary">Save Preferences</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rating Modal -->
+  <div id="rating-modal" class="modal hidden">
+    <div class="modal-content rating">
+      <h2>Rate This Sauna</h2>
+      <p id="rating-sauna-name"></p>
+      <div class="star-rating" id="star-rating">
+        <span class="star" data-value="1">&#9733;</span>
+        <span class="star" data-value="2">&#9733;</span>
+        <span class="star" data-value="3">&#9733;</span>
+        <span class="star" data-value="4">&#9733;</span>
+        <span class="star" data-value="5">&#9733;</span>
+      </div>
+      <p class="rating-label" id="rating-label">Select a rating</p>
+      <div class="modal-actions">
+        <button id="rating-cancel" class="btn btn-secondary">Cancel</button>
+        <button id="rating-save" class="btn btn-primary" disabled>Save Rating</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
