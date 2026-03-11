@@ -22,7 +22,7 @@
       "tradition": 7,
       "overall": 9
     },
-    "nude": true
+    "nude": false
   },
   {
     "id": "kotiharjun-helsinki",
@@ -197,7 +197,7 @@
       "tradition": 10,
       "overall": 10
     },
-    "nude": true
+    "nude": false
   },
   {
     "id": "kuuma-tampere",
@@ -222,7 +222,7 @@
       "tradition": 8,
       "overall": 9
     },
-    "nude": true
+    "nude": false
   },
   {
     "id": "kaupinojan-tampere",
@@ -247,7 +247,7 @@
       "tradition": 9,
       "overall": 9
     },
-    "nude": true
+    "nude": false
   },
   {
     "id": "mooska-farm-estonia",
@@ -347,7 +347,7 @@
       "tradition": 5,
       "overall": 7
     },
-    "nude": true
+    "nude": false
   },
   {
     "id": "banya-no1-london",
@@ -372,7 +372,7 @@
       "tradition": 7,
       "overall": 6
     },
-    "nude": true
+    "nude": false
   },
   {
     "id": "community-sauna-baths-london",
@@ -547,7 +547,7 @@
       "tradition": 3,
       "overall": 4
     },
-    "nude": false
+    "nude": true
   },
   {
     "id": "silja-line-sauna-ferry",
@@ -922,7 +922,7 @@
       "tradition": 7,
       "overall": 7
     },
-    "nude": true
+    "nude": false
   },
   {
     "id": "kok-oslo",
@@ -947,7 +947,7 @@
       "tradition": 5,
       "overall": 8
     },
-    "nude": true
+    "nude": false
   },
   {
     "id": "pust-tromso",
@@ -972,7 +972,7 @@
       "tradition": 4,
       "overall": 8
     },
-    "nude": true
+    "nude": false
   },
   {
     "id": "bastuflotten-stockholm",
@@ -1022,7 +1022,7 @@
       "tradition": 4,
       "overall": 7
     },
-    "nude": true
+    "nude": false
   },
   {
     "id": "von-sauna-kirkland",
@@ -1251,7 +1251,7 @@
       "tradition": 6,
       "overall": 6
     },
-    "nude": false
+    "nude": true
   },
   {
     "id": "sauna-am-see-uster",
@@ -1277,7 +1277,7 @@
       "tradition": 6,
       "overall": 8
     },
-    "nude": false
+    "nude": true
   },
   {
     "id": "bains-des-paquis-geneva",
@@ -1485,7 +1485,7 @@
       "tradition": 7,
       "overall": 7
     },
-    "nude": true
+    "nude": false
   },
   {
     "id": "leukerbad-therme",
@@ -1667,7 +1667,7 @@
       "tradition": 4,
       "overall": 8
     },
-    "nude": false
+    "nude": true
   },
   {
     "id": "therme-zurzach",
