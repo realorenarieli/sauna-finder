@@ -358,9 +358,9 @@ a { color: var(--accent); }
 }
 
 .tag-nude {
-  background: #f0e0e0;
-  color: #8b3a3a;
-  border-color: #d4a0a0;
+  background: #e4eef6;
+  color: #3a6b8b;
+  border-color: #a0c4d4;
   font-weight: 600;
   letter-spacing: 0.3px;
 }

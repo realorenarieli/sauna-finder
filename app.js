@@ -200,6 +200,7 @@ function initMap() {
       container.innerHTML = `
         <button class="marker-toggle-btn active" data-mode="score" title="Show scores">123</button>
         <button class="marker-toggle-btn" data-mode="type" title="Show types">⛵</button>
+        <button class="marker-toggle-btn" data-mode="nude" title="Show nude policy">🍆</button>
       `;
       L.DomEvent.disableClickPropagation(container);
       container.querySelectorAll('.marker-toggle-btn').forEach(btn => {
@@ -223,13 +224,25 @@ function renderMarkers() {
     const size = isSelected ? 32 : 26;
     const half = size / 2;
 
-    let content, fontSize;
+    let content, fontSize, bg, border, color;
     if (markerMode === 'type') {
       content = TYPE_ICONS[sauna.type] || '♨️';
       fontSize = isSelected ? 16 : 14;
+      bg = isSelected ? '#6b5234' : '#fdf9f4';
+      border = '#6b5234';
+      color = isSelected ? '#fdf9f4' : '#6b5234';
+    } else if (markerMode === 'nude') {
+      content = sauna.nude ? '🍆' : '👖';
+      fontSize = isSelected ? 16 : 13;
+      bg = isSelected ? (sauna.nude ? '#3a6b8b' : '#6b5234') : (sauna.nude ? '#e4eef6' : '#fdf9f4');
+      border = sauna.nude ? '#3a6b8b' : '#b0a090';
+      color = sauna.nude ? '#3a6b8b' : '#6b5234';
     } else {
       content = Math.round(finnishScore(sauna));
       fontSize = isSelected ? 12 : 10;
+      bg = isSelected ? '#6b5234' : '#fdf9f4';
+      border = '#6b5234';
+      color = isSelected ? '#fdf9f4' : '#6b5234';
     }
 
     const icon = L.divIcon({
@@ -237,12 +250,12 @@ function renderMarkers() {
       html: `<div style="
         width: ${size}px; height: ${size}px;
         border-radius: 50%;
-        background: ${isSelected ? '#6b5234' : '#fdf9f4'};
-        border: 2px solid #6b5234;
+        background: ${bg};
+        border: 2px solid ${border};
         box-shadow: 0 1px 4px rgba(59,47,32,0.25);
         display: flex; align-items: center; justify-content: center;
         font-size: ${fontSize}px; font-weight: 600;
-        color: ${isSelected ? '#fdf9f4' : '#6b5234'};
+        color: ${color};
         transition: all 0.15s;
         line-height: 1;
       ">${content}</div>`,
@@ -566,11 +579,14 @@ function applyFilters() {
   const search = document.getElementById('search').value.toLowerCase();
   const type = document.getElementById('filter-type').value;
   const country = document.getElementById('filter-country').value;
+  const nude = document.getElementById('filter-nude').value;
 
   filteredSaunas = saunas.filter(s => {
     if (search && !s.name.toLowerCase().includes(search) && !s.city.toLowerCase().includes(search) && !s.country.toLowerCase().includes(search)) return false;
     if (type !== 'all' && s.type !== type) return false;
     if (country !== 'all' && s.country !== country) return false;
+    if (nude === 'nude' && !s.nude) return false;
+    if (nude === 'clothed' && s.nude) return false;
     return true;
   });
 
@@ -638,6 +654,7 @@ function setupListeners() {
   document.getElementById('search').addEventListener('input', refreshAll);
   document.getElementById('sort-by').addEventListener('change', refreshAll);
   document.getElementById('filter-type').addEventListener('change', refreshAll);
+  document.getElementById('filter-nude').addEventListener('change', refreshAll);
   document.getElementById('filter-country').addEventListener('change', () => refreshAll(true));
 
   // Collapsible taste profile
