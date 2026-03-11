@@ -671,6 +671,30 @@ a { color: var(--accent); }
 
 .link-btn:hover { color: var(--accent); }
 
+/* ── Wishlist ──────────────────────────────── */
+.btn-wishlist {
+  margin-bottom: 8px;
+  border-color: #d4a0a0;
+  color: #8b3a3a;
+}
+
+.btn-wishlist:hover {
+  background: #f6e4e4;
+  border-color: #c48080;
+}
+
+.btn-wishlist.wishlisted {
+  background: #f6e4e4;
+  border-color: #d4a0a0;
+  color: #8b3a3a;
+  font-weight: 600;
+}
+
+.wishlist-indicator {
+  color: #c45050;
+  font-size: 11px;
+}
+
 /* ── Map ─────────────────────────────────────── */
 #map {
   flex: 1;

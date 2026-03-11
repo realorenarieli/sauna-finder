@@ -70,12 +70,17 @@ function loadProfile() {
   try {
     return JSON.parse(localStorage.getItem('saunaProfile')) || {
       ratings: {},
+      wishlist: {},
       preferences: null,
       onboardingDone: false,
     };
   } catch {
-    return { ratings: {}, preferences: null, onboardingDone: false };
+    return { ratings: {}, wishlist: {}, preferences: null, onboardingDone: false };
   }
+}
+
+function ensureProfileFields() {
+  if (!profile.wishlist) profile.wishlist = {};
 }
 
 function saveProfile() {
@@ -283,11 +288,12 @@ function renderList() {
     const fs = finnishScore(sauna);
     const fy = forYouScore(sauna);
     const isVisited = !!profile.ratings[sauna.id];
+    const isWishlisted = !!profile.wishlist[sauna.id];
 
     return `
       <div class="sauna-card ${selectedId === sauna.id ? 'active' : ''}" data-id="${sauna.id}">
         <div class="sauna-card-info">
-          <div class="sauna-card-name">${sauna.name}</div>
+          <div class="sauna-card-name">${isWishlisted ? '<span class="wishlist-indicator" title="On your wishlist">&#9829;</span> ' : ''}${sauna.name}</div>
           <div class="sauna-card-location">${sauna.city}, ${sauna.country}</div>
           <div class="sauna-card-meta">
             <span class="tag">${TYPE_LABELS[sauna.type] || sauna.type}</span>
@@ -321,6 +327,7 @@ function openDetail(id) {
   const tier = scoreTier(fs);
   const fyTier = fy !== null ? scoreTier(fy) : null;
   const isVisited = !!profile.ratings[sauna.id];
+  const isWishlisted = !!profile.wishlist[sauna.id];
   const dims = Object.keys(DEFAULT_WEIGHTS);
   const effectiveW = hasPersonalScores() ? getEffectiveWeights() : null;
 
@@ -401,6 +408,9 @@ function openDetail(id) {
     </div>
 
     <div class="detail-actions">
+      <button class="btn btn-wishlist ${isWishlisted ? 'wishlisted' : ''}" onclick="toggleWishlist('${sauna.id}')">
+        ${isWishlisted ? '&#9829; On Wishlist' : '&#9825; Add to Wishlist'}
+      </button>
       ${isVisited
         ? `<button class="btn" onclick="openRating('${sauna.id}')">
             ${'★'.repeat(profile.ratings[sauna.id])} Visited &mdash; re-rate
@@ -476,6 +486,18 @@ function removeRating(id) {
   saveProfile();
   refreshAll();
   if (selectedId === id) openDetail(id);
+}
+
+// ── Wishlist ────────────────────────────────
+function toggleWishlist(id) {
+  if (profile.wishlist[id]) {
+    delete profile.wishlist[id];
+  } else {
+    profile.wishlist[id] = true;
+  }
+  saveProfile();
+  refreshAll();
+  if (selectedId) openDetail(selectedId);
 }
 
 // ── Onboarding ───────────────────────────────
@@ -580,6 +602,7 @@ function applyFilters() {
   const type = document.getElementById('filter-type').value;
   const country = document.getElementById('filter-country').value;
   const nude = document.getElementById('filter-nude').value;
+  const wishlist = document.getElementById('filter-wishlist').value;
 
   filteredSaunas = saunas.filter(s => {
     if (search && !s.name.toLowerCase().includes(search) && !s.city.toLowerCase().includes(search) && !s.country.toLowerCase().includes(search)) return false;
@@ -587,6 +610,7 @@ function applyFilters() {
     if (country !== 'all' && s.country !== country) return false;
     if (nude === 'nude' && !s.nude) return false;
     if (nude === 'clothed' && s.nude) return false;
+    if (wishlist === 'wishlist' && !profile.wishlist[s.id]) return false;
     return true;
   });
 
@@ -655,6 +679,7 @@ function setupListeners() {
   document.getElementById('sort-by').addEventListener('change', refreshAll);
   document.getElementById('filter-type').addEventListener('change', refreshAll);
   document.getElementById('filter-nude').addEventListener('change', refreshAll);
+  document.getElementById('filter-wishlist').addEventListener('change', refreshAll);
   document.getElementById('filter-country').addEventListener('change', () => refreshAll(true));
 
   // Collapsible taste profile
@@ -729,6 +754,7 @@ async function init() {
     return;
   }
 
+  ensureProfileFields();
   initMap();
   populateCountryFilter();
   setupListeners();
@@ -743,5 +769,6 @@ async function init() {
 // Make functions available globally for onclick handlers
 window.openRating = openRating;
 window.removeRating = removeRating;
+window.toggleWishlist = toggleWishlist;
 
 init();
