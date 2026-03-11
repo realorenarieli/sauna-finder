@@ -357,6 +357,14 @@ a { color: var(--accent); }
   border: 1px solid var(--border);
 }
 
+.tag-nude {
+  background: #f0e0e0;
+  color: #8b3a3a;
+  border-color: #d4a0a0;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
 .score-col {
   display: flex;
   flex-direction: column;

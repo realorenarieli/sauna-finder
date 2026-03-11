@@ -21,7 +21,8 @@
       "noFrills": 5,
       "tradition": 7,
       "overall": 9
-    }
+    },
+    "nude": true
   },
   {
     "id": "kotiharjun-helsinki",
@@ -45,7 +46,8 @@
       "noFrills": 10,
       "tradition": 10,
       "overall": 10
-    }
+    },
+    "nude": true
   },
   {
     "id": "sompasauna-helsinki",
@@ -53,8 +55,8 @@
     "city": "Helsinki",
     "country": "Finland",
     "address": "Mustikkamaa, Helsinki (moved from Sompasaari in 2025)",
-    "lat": 60.1750,
-    "lng": 24.9780,
+    "lat": 60.175,
+    "lng": 24.978,
     "type": "wood-fired",
     "hours": "Open 24/7, volunteer-maintained (check social media for stove status)",
     "price": "Free",
@@ -69,7 +71,8 @@
       "noFrills": 10,
       "tradition": 9,
       "overall": 9
-    }
+    },
+    "nude": true
   },
   {
     "id": "allas-sea-pool-helsinki",
@@ -78,7 +81,7 @@
     "country": "Finland",
     "address": "Katajanokanlaituri 2a, 00160 Helsinki",
     "lat": 60.1673,
-    "lng": 24.9580,
+    "lng": 24.958,
     "type": "electric",
     "hours": "Daily 06:30-21:00 (seasonal variations)",
     "price": "~€17",
@@ -93,7 +96,8 @@
       "noFrills": 4,
       "tradition": 4,
       "overall": 6
-    }
+    },
+    "nude": false
   },
   {
     "id": "kulttuurisauna-helsinki",
@@ -101,8 +105,8 @@
     "city": "Helsinki",
     "country": "Finland",
     "address": "Hakaniemenranta 17, 00530 Helsinki",
-    "lat": 60.1790,
-    "lng": 24.9540,
+    "lat": 60.179,
+    "lng": 24.954,
     "type": "wood-fired",
     "hours": "Wed-Sun 16:00-20:00 (check website)",
     "price": "€17",
@@ -117,7 +121,8 @@
       "noFrills": 8,
       "tradition": 7,
       "overall": 8
-    }
+    },
+    "nude": true
   },
   {
     "id": "sauna-hermanni-helsinki",
@@ -125,8 +130,8 @@
     "city": "Helsinki",
     "country": "Finland",
     "address": "Hämeentie 63, 00550 Helsinki",
-    "lat": 60.1890,
-    "lng": 24.9590,
+    "lat": 60.189,
+    "lng": 24.959,
     "type": "electric",
     "hours": "Mon-Sat 15:00-20:00, Sun closed",
     "price": "~€10",
@@ -141,7 +146,8 @@
       "noFrills": 10,
       "tradition": 8,
       "overall": 7
-    }
+    },
+    "nude": true
   },
   {
     "id": "rajaportti-tampere",
@@ -149,8 +155,8 @@
     "city": "Tampere",
     "country": "Finland",
     "address": "Pispalan valtatie 9, 33250 Tampere",
-    "lat": 61.5020,
-    "lng": 23.7300,
+    "lat": 61.502,
+    "lng": 23.73,
     "type": "wood-fired",
     "hours": "Mon-Fri 15:00-21:00, Sat 13:00-21:00, Sun 13:00-19:00",
     "price": "~€10",
@@ -165,7 +171,8 @@
       "noFrills": 10,
       "tradition": 10,
       "overall": 10
-    }
+    },
+    "nude": true
   },
   {
     "id": "rauhaniemi-tampere",
@@ -173,8 +180,8 @@
     "city": "Tampere",
     "country": "Finland",
     "address": "Rauhaniementie 24, 33180 Tampere",
-    "lat": 61.5100,
-    "lng": 23.7900,
+    "lat": 61.51,
+    "lng": 23.79,
     "type": "wood-fired",
     "hours": "Daily, hours vary by season (summer longer hours)",
     "price": "~€8",
@@ -189,7 +196,8 @@
       "noFrills": 10,
       "tradition": 10,
       "overall": 10
-    }
+    },
+    "nude": true
   },
   {
     "id": "kuuma-tampere",
@@ -197,8 +205,8 @@
     "city": "Tampere",
     "country": "Finland",
     "address": "Laukontori 21, 33200 Tampere",
-    "lat": 61.4940,
-    "lng": 23.7670,
+    "lat": 61.494,
+    "lng": 23.767,
     "type": "wood-fired",
     "hours": "Mon-Sat 11:00-22:00, Sun 11:00-20:00",
     "price": "€16",
@@ -213,7 +221,8 @@
       "noFrills": 6,
       "tradition": 8,
       "overall": 9
-    }
+    },
+    "nude": true
   },
   {
     "id": "kaupinojan-tampere",
@@ -221,8 +230,8 @@
     "city": "Tampere",
     "country": "Finland",
     "address": "Kaupinojanranta, 33500 Tampere",
-    "lat": 61.5070,
-    "lng": 23.8060,
+    "lat": 61.507,
+    "lng": 23.806,
     "type": "wood-fired",
     "hours": "Wed-Sun (check seasonal hours)",
     "price": "~€10",
@@ -237,7 +246,8 @@
       "noFrills": 9,
       "tradition": 9,
       "overall": 9
-    }
+    },
+    "nude": true
   },
   {
     "id": "mooska-farm-estonia",
@@ -245,8 +255,8 @@
     "city": "Võromaa",
     "country": "Estonia",
     "address": "Mooska talu, Haanja vald, Võrumaa, Estonia",
-    "lat": 57.6880,
-    "lng": 27.0550,
+    "lat": 57.688,
+    "lng": 27.055,
     "type": "smoke",
     "hours": "By reservation only",
     "price": "~€20-30 per person (group bookings)",
@@ -261,7 +271,8 @@
       "noFrills": 10,
       "tradition": 10,
       "overall": 10
-    }
+    },
+    "nude": true
   },
   {
     "id": "centralbadet-stockholm",
@@ -269,8 +280,8 @@
     "city": "Stockholm",
     "country": "Sweden",
     "address": "Drottninggatan 88, 111 36 Stockholm",
-    "lat": 59.3370,
-    "lng": 18.0650,
+    "lat": 59.337,
+    "lng": 18.065,
     "type": "electric",
     "hours": "Mon-Fri 07:00-20:30, Sat-Sun 08:00-17:30",
     "price": "~350 SEK (~€30)",
@@ -285,7 +296,8 @@
       "noFrills": 2,
       "tradition": 5,
       "overall": 5
-    }
+    },
+    "nude": true
   },
   {
     "id": "hellas-bastu-stockholm",
@@ -293,8 +305,8 @@
     "city": "Stockholm",
     "country": "Sweden",
     "address": "Hellasgården, 131 33 Nacka",
-    "lat": 59.2960,
-    "lng": 18.1380,
+    "lat": 59.296,
+    "lng": 18.138,
     "type": "wood-fired",
     "hours": "Daily (check seasonal hours, typically 09:00-20:00)",
     "price": "~100 SEK (~€9)",
@@ -309,7 +321,8 @@
       "noFrills": 9,
       "tradition": 8,
       "overall": 9
-    }
+    },
+    "nude": true
   },
   {
     "id": "copenhot-copenhagen",
@@ -317,8 +330,8 @@
     "city": "Copenhagen",
     "country": "Denmark",
     "address": "Refshalevej 325, 1432 Copenhagen",
-    "lat": 55.6920,
-    "lng": 12.6150,
+    "lat": 55.692,
+    "lng": 12.615,
     "type": "wood-fired",
     "hours": "Daily 09:00-22:00 (booking required)",
     "price": "~300 DKK (~€40)",
@@ -333,7 +346,8 @@
       "noFrills": 5,
       "tradition": 5,
       "overall": 7
-    }
+    },
+    "nude": true
   },
   {
     "id": "banya-no1-london",
@@ -341,8 +355,8 @@
     "city": "London",
     "country": "United Kingdom",
     "address": "17 Micawber St, Hoxton, London N1 7TB",
-    "lat": 51.5290,
-    "lng": -0.0870,
+    "lat": 51.529,
+    "lng": -0.087,
     "type": "russian-banya",
     "hours": "Daily 11:00-23:00",
     "price": "From ~£50 (varies by session/day)",
@@ -357,7 +371,8 @@
       "noFrills": 3,
       "tradition": 7,
       "overall": 6
-    }
+    },
+    "nude": true
   },
   {
     "id": "community-sauna-baths-london",
@@ -365,8 +380,8 @@
     "city": "London",
     "country": "United Kingdom",
     "address": "1 Rochester Place, London NW1 9JU",
-    "lat": 51.5370,
-    "lng": -0.1430,
+    "lat": 51.537,
+    "lng": -0.143,
     "type": "wood-fired",
     "hours": "Sessions vary (check website for booking)",
     "price": "£9.50/hour",
@@ -381,7 +396,8 @@
       "noFrills": 9,
       "tradition": 6,
       "overall": 8
-    }
+    },
+    "nude": false
   },
   {
     "id": "temz-floating-london",
@@ -405,7 +421,8 @@
       "noFrills": 7,
       "tradition": 4,
       "overall": 7
-    }
+    },
+    "nude": false
   },
   {
     "id": "vabali-spa-berlin",
@@ -413,8 +430,8 @@
     "city": "Berlin",
     "country": "Germany",
     "address": "Seydlitzstraße 6, 10557 Berlin",
-    "lat": 52.5260,
-    "lng": 13.3660,
+    "lat": 52.526,
+    "lng": 13.366,
     "type": "electric",
     "hours": "Daily 09:00-24:00",
     "price": "€27.50-56.50 (depends on duration)",
@@ -429,7 +446,8 @@
       "noFrills": 2,
       "tradition": 3,
       "overall": 5
-    }
+    },
+    "nude": true
   },
   {
     "id": "stadtbad-neukolln-berlin",
@@ -437,8 +455,8 @@
     "city": "Berlin",
     "country": "Germany",
     "address": "Ganghoferstraße 3, 12043 Berlin",
-    "lat": 52.4780,
-    "lng": 13.4380,
+    "lat": 52.478,
+    "lng": 13.438,
     "type": "electric",
     "hours": "Check website for sauna-specific hours",
     "price": "~€20",
@@ -453,7 +471,8 @@
       "noFrills": 8,
       "tradition": 4,
       "overall": 5
-    }
+    },
+    "nude": true
   },
   {
     "id": "russian-turkish-baths-nyc",
@@ -477,7 +496,8 @@
       "noFrills": 8,
       "tradition": 7,
       "overall": 7
-    }
+    },
+    "nude": false
   },
   {
     "id": "bathhouse-williamsburg-nyc",
@@ -485,8 +505,8 @@
     "city": "New York",
     "country": "United States",
     "address": "103 N 10th St, Brooklyn, NY 11249",
-    "lat": 40.7190,
-    "lng": -73.9570,
+    "lat": 40.719,
+    "lng": -73.957,
     "type": "electric",
     "hours": "Daily 08:00-22:00",
     "price": "From ~$65",
@@ -501,7 +521,8 @@
       "noFrills": 1,
       "tradition": 2,
       "overall": 3
-    }
+    },
+    "nude": false
   },
   {
     "id": "spa-land-busan",
@@ -510,7 +531,7 @@
     "country": "South Korea",
     "address": "Centum City, Haeundae-gu, Busan",
     "lat": 35.1695,
-    "lng": 129.1310,
+    "lng": 129.131,
     "type": "korean-jjimjilbang",
     "hours": "Daily 06:00-24:00",
     "price": "~₩18,000 (~€12)",
@@ -525,7 +546,8 @@
       "noFrills": 6,
       "tradition": 3,
       "overall": 4
-    }
+    },
+    "nude": false
   },
   {
     "id": "silja-line-sauna-ferry",
@@ -533,8 +555,8 @@
     "city": "Helsinki-Stockholm",
     "country": "Finland/Sweden",
     "address": "Tallink Silja, Helsinki-Stockholm ferry",
-    "lat": 60.1670,
-    "lng": 24.9550,
+    "lat": 60.167,
+    "lng": 24.955,
     "type": "electric",
     "hours": "During ferry sailing hours (typically 06:00-22:00)",
     "price": "Included with cabin or ~€15 separately",
@@ -549,7 +571,8 @@
       "noFrills": 6,
       "tradition": 5,
       "overall": 5
-    }
+    },
+    "nude": true
   },
   {
     "id": "sanduny-moscow",
@@ -557,8 +580,8 @@
     "city": "Moscow",
     "country": "Russia",
     "address": "Neglinnaya St 14, bld 3-7, Moscow",
-    "lat": 55.7650,
-    "lng": 37.6220,
+    "lat": 55.765,
+    "lng": 37.622,
     "type": "russian-banya",
     "hours": "Daily 08:00-22:00",
     "price": "~₽3,000-5,000 (~€30-50)",
@@ -573,7 +596,8 @@
       "noFrills": 3,
       "tradition": 8,
       "overall": 7
-    }
+    },
+    "nude": true
   },
   {
     "id": "tallinna-saun",
@@ -581,8 +605,8 @@
     "city": "Tallinn",
     "country": "Estonia",
     "address": "Tartu maantee 73, 10115 Tallinn",
-    "lat": 59.4300,
-    "lng": 24.7620,
+    "lat": 59.43,
+    "lng": 24.762,
     "type": "wood-fired",
     "hours": "Mon-Tue & Thu-Sun 10:00-21:00, Wed closed",
     "price": "From €10",
@@ -597,7 +621,8 @@
       "noFrills": 9,
       "tradition": 10,
       "overall": 9
-    }
+    },
+    "nude": true
   },
   {
     "id": "kalma-saun-tallinn",
@@ -605,8 +630,8 @@
     "city": "Tallinn",
     "country": "Estonia",
     "address": "Vana-Kalamaja 9a, 10414 Tallinn",
-    "lat": 59.4420,
-    "lng": 24.7370,
+    "lat": 59.442,
+    "lng": 24.737,
     "type": "wood-fired",
     "hours": "Mon-Fri 11:00-22:00, Sat-Sun 10:00-23:00",
     "price": "€14-20 (2.5 hours)",
@@ -621,7 +646,8 @@
       "noFrills": 8,
       "tradition": 9,
       "overall": 9
-    }
+    },
+    "nude": true
   },
   {
     "id": "raua-saun-tallinn",
@@ -629,8 +655,8 @@
     "city": "Tallinn",
     "country": "Estonia",
     "address": "Raua tn 23, 10124 Tallinn",
-    "lat": 59.4340,
-    "lng": 24.7590,
+    "lat": 59.434,
+    "lng": 24.759,
     "type": "electric",
     "hours": "Tue-Sun 11:00-21:00, Mon closed",
     "price": "€8-10 (2 hours)",
@@ -645,7 +671,8 @@
       "noFrills": 9,
       "tradition": 8,
       "overall": 7
-    }
+    },
+    "nude": true
   },
   {
     "id": "heldeke-sauna-tallinn",
@@ -653,8 +680,8 @@
     "city": "Tallinn",
     "country": "Estonia",
     "address": "Tööstuse tn 13, 10413 Tallinn",
-    "lat": 59.4430,
-    "lng": 24.7400,
+    "lat": 59.443,
+    "lng": 24.74,
     "type": "electric",
     "hours": "Wed & Sun sessions at 17:30 and 20:00 (2 hours each)",
     "price": "€7.50 online / €8.50 at door",
@@ -669,7 +696,8 @@
       "noFrills": 7,
       "tradition": 5,
       "overall": 7
-    }
+    },
+    "nude": false
   },
   {
     "id": "iglupark-tallinn",
@@ -677,8 +705,8 @@
     "city": "Tallinn",
     "country": "Estonia",
     "address": "Lennusadama 7, Noblessner, 10415 Tallinn",
-    "lat": 59.4530,
-    "lng": 24.7350,
+    "lat": 59.453,
+    "lng": 24.735,
     "type": "wood-fired",
     "hours": "Daily 08:30-12:00 & 17:00-22:00 (booking required)",
     "price": "€24 communal / €110-130 private (2 hours, up to 10 people)",
@@ -693,7 +721,8 @@
       "noFrills": 5,
       "tradition": 5,
       "overall": 7
-    }
+    },
+    "nude": false
   },
   {
     "id": "anne-saun-tartu",
@@ -701,8 +730,8 @@
     "city": "Tartu",
     "country": "Estonia",
     "address": "Anne 44, 50705 Tartu",
-    "lat": 58.3690,
-    "lng": 26.7260,
+    "lat": 58.369,
+    "lng": 26.726,
     "type": "electric",
     "hours": "Thu-Fri 14:00-20:30, Sat 12:00-20:30, Sun 12:00-19:00",
     "price": "~€5-8",
@@ -717,7 +746,8 @@
       "noFrills": 9,
       "tradition": 7,
       "overall": 7
-    }
+    },
+    "nude": true
   },
   {
     "id": "saunamaa-voru",
@@ -741,7 +771,8 @@
       "noFrills": 7,
       "tradition": 9,
       "overall": 8
-    }
+    },
+    "nude": true
   },
   {
     "id": "mustjoe-smoke-sauna",
@@ -749,8 +780,8 @@
     "city": "Anija, Harju County",
     "country": "Estonia",
     "address": "Mustjõe küla, Anija vald, Harju maakond",
-    "lat": 59.3170,
-    "lng": 25.2650,
+    "lat": 59.317,
+    "lng": 25.265,
     "type": "smoke",
     "hours": "Shared sauna Thursdays; private sessions by advance booking",
     "price": "€50/person shared (2 hours) / €300 private (up to 4 people)",
@@ -765,7 +796,8 @@
       "noFrills": 9,
       "tradition": 10,
       "overall": 9
-    }
+    },
+    "nude": true
   },
   {
     "id": "balta-pirts-riga",
@@ -773,8 +805,8 @@
     "city": "Riga",
     "country": "Latvia",
     "address": "Tallinas iela 71, LV-1009 Rīga",
-    "lat": 56.9520,
-    "lng": 24.1340,
+    "lat": 56.952,
+    "lng": 24.134,
     "type": "wood-fired",
     "hours": "Wed-Thu 08:00-20:00, Fri-Sat 08:00-21:00, Sun 08:00-20:00, Mon-Tue closed",
     "price": "~€10-15",
@@ -789,7 +821,8 @@
       "noFrills": 9,
       "tradition": 10,
       "overall": 9
-    }
+    },
+    "nude": true
   },
   {
     "id": "pirts-nr1-riga",
@@ -797,8 +830,8 @@
     "city": "Riga",
     "country": "Latvia",
     "address": "Ulbrokas iela 26a, LV-1021 Rīga",
-    "lat": 56.9330,
-    "lng": 24.1810,
+    "lat": 56.933,
+    "lng": 24.181,
     "type": "wood-fired",
     "hours": "Mon-Sun 09:00-22:00 (Tue closes 20:30; women's section limited Fri-Sun)",
     "price": "€14 (pensioners €10-11, children 7-14 €6)",
@@ -813,7 +846,8 @@
       "noFrills": 7,
       "tradition": 8,
       "overall": 8
-    }
+    },
+    "nude": true
   },
   {
     "id": "ivanas-musa-gonga-vilnius",
@@ -821,8 +855,8 @@
     "city": "Vilnius",
     "country": "Lithuania",
     "address": "Kalvarijų g. 50D, LT-09207 Vilnius",
-    "lat": 54.6970,
-    "lng": 25.2790,
+    "lat": 54.697,
+    "lng": 25.279,
     "type": "wood-fired",
     "hours": "Mon-Fri 18:00-22:30, Sat 09:30-19:00, Sun 14:00-19:00",
     "price": "From €25 (open sessions); €99/month unlimited",
@@ -837,7 +871,8 @@
       "noFrills": 5,
       "tradition": 7,
       "overall": 8
-    }
+    },
+    "nude": true
   },
   {
     "id": "pilaites-maluno-pirtys-vilnius",
@@ -845,8 +880,8 @@
     "city": "Vilnius",
     "country": "Lithuania",
     "address": "Piliakalnio g. 4, LT-06229 Vilnius",
-    "lat": 54.7100,
-    "lng": 25.1870,
+    "lat": 54.71,
+    "lng": 25.187,
     "type": "wood-fired",
     "hours": "By reservation (+370 699 38562)",
     "price": "Contact for pricing (3-hour sessions)",
@@ -861,7 +896,8 @@
       "noFrills": 8,
       "tradition": 10,
       "overall": 9
-    }
+    },
+    "nude": true
   },
   {
     "id": "lampedziu-pirtis-kaunas",
@@ -869,8 +905,8 @@
     "city": "Kaunas",
     "country": "Lithuania",
     "address": "Gervių g., LT-47198 Kaunas",
-    "lat": 54.9370,
-    "lng": 23.8950,
+    "lat": 54.937,
+    "lng": 23.895,
     "type": "wood-fired",
     "hours": "Mon,Wed-Fri 15:00-21:00, Sat-Sun 10:00-21:00, Tue closed",
     "price": "~€5-10",
@@ -885,7 +921,8 @@
       "noFrills": 8,
       "tradition": 7,
       "overall": 7
-    }
+    },
+    "nude": true
   },
   {
     "id": "kok-oslo",
@@ -893,7 +930,7 @@
     "city": "Oslo",
     "country": "Norway",
     "address": "Stranden 32, Aker Brygge, 0250 Oslo",
-    "lat": 59.9070,
+    "lat": 59.907,
     "lng": 10.7275,
     "type": "boat",
     "hours": "Daily 08:00-22:00 (seasonal variations)",
@@ -909,7 +946,8 @@
       "noFrills": 6,
       "tradition": 5,
       "overall": 8
-    }
+    },
+    "nude": true
   },
   {
     "id": "pust-tromso",
@@ -933,7 +971,8 @@
       "noFrills": 5,
       "tradition": 4,
       "overall": 8
-    }
+    },
+    "nude": true
   },
   {
     "id": "bastuflotten-stockholm",
@@ -957,7 +996,8 @@
       "noFrills": 7,
       "tradition": 6,
       "overall": 8
-    }
+    },
+    "nude": true
   },
   {
     "id": "platform-cph",
@@ -981,7 +1021,8 @@
       "noFrills": 6,
       "tradition": 4,
       "overall": 7
-    }
+    },
+    "nude": true
   },
   {
     "id": "von-sauna-kirkland",
@@ -1005,7 +1046,8 @@
       "noFrills": 6,
       "tradition": 5,
       "overall": 7
-    }
+    },
+    "nude": false
   },
   {
     "id": "havn-saunas-victoria",
@@ -1029,7 +1071,8 @@
       "noFrills": 4,
       "tradition": 3,
       "overall": 6
-    }
+    },
+    "nude": false
   },
   {
     "id": "watershed-queenstown",
@@ -1053,7 +1096,8 @@
       "noFrills": 6,
       "tradition": 4,
       "overall": 7
-    }
+    },
+    "nude": false
   },
   {
     "id": "hotboat-loch-tay",
@@ -1061,8 +1105,8 @@
     "city": "Kenmore",
     "country": "United Kingdom",
     "address": "Taymouth Marina, Kenmore, Aberfeldy PH15 2HW",
-    "lat": 56.5980,
-    "lng": -4.0280,
+    "lat": 56.598,
+    "lng": -4.028,
     "type": "boat",
     "hours": "May-August, 1-2 hour sessions",
     "price": "~£55 per person",
@@ -1077,7 +1121,8 @@
       "noFrills": 7,
       "tradition": 4,
       "overall": 7
-    }
+    },
+    "nude": false
   },
   {
     "id": "warm-hearts-amsterdam",
@@ -1085,8 +1130,8 @@
     "city": "Amsterdam",
     "country": "Netherlands",
     "address": "Sloterplas, Amsterdam Nieuw-West",
-    "lat": 52.3630,
-    "lng": 4.8190,
+    "lat": 52.363,
+    "lng": 4.819,
     "type": "boat",
     "hours": "Seasonal sessions (check website)",
     "price": "Free (pay with a good deed)",
@@ -1101,7 +1146,8 @@
       "noFrills": 10,
       "tradition": 4,
       "overall": 8
-    }
+    },
+    "nude": false
   },
   {
     "id": "seebad-enge-zurich",
@@ -1109,8 +1155,8 @@
     "city": "Zurich",
     "country": "Switzerland",
     "address": "Mythenquai 9, 8002 Zurich",
-    "lat": 47.3630,
-    "lng": 8.5340,
+    "lat": 47.363,
+    "lng": 8.534,
     "type": "wood-fired",
     "hours": "Oct-Apr: daily 10:00-23:00 (Mon women-only)",
     "price": "CHF 29",
@@ -1126,7 +1172,8 @@
       "noFrills": 7,
       "tradition": 6,
       "overall": 8
-    }
+    },
+    "nude": true
   },
   {
     "id": "saunaboot-zurichsee",
@@ -1135,7 +1182,7 @@
     "country": "Switzerland",
     "address": "Bootsvermietung Enge, Mythenquai, 8002 Zurich",
     "lat": 47.3625,
-    "lng": 8.5330,
+    "lng": 8.533,
     "type": "boat",
     "hours": "Year-round, 4-hour sessions (booking required)",
     "price": "CHF 450 (for 2-6 people, 4 hours)",
@@ -1151,7 +1198,8 @@
       "noFrills": 6,
       "tradition": 4,
       "overall": 8
-    }
+    },
+    "nude": false
   },
   {
     "id": "hurlimannbad-zurich",
@@ -1159,8 +1207,8 @@
     "city": "Zurich",
     "country": "Switzerland",
     "address": "Brandschenkestrasse 150, 8002 Zurich",
-    "lat": 47.3690,
-    "lng": 8.5250,
+    "lat": 47.369,
+    "lng": 8.525,
     "type": "steam",
     "hours": "Mon-Sun 09:00-22:00",
     "price": "CHF 42 (thermal bath + rooftop pool)",
@@ -1176,7 +1224,8 @@
       "noFrills": 2,
       "tradition": 5,
       "overall": 6
-    }
+    },
+    "nude": true
   },
   {
     "id": "stadtbad-zurich-hammam",
@@ -1184,8 +1233,8 @@
     "city": "Zurich",
     "country": "Switzerland",
     "address": "Stauffacherstrasse 60, 8004 Zurich",
-    "lat": 47.3720,
-    "lng": 8.5280,
+    "lat": 47.372,
+    "lng": 8.528,
     "type": "steam",
     "hours": "Mon-Fri 11:00-23:00, Sat 10:00-23:00, Sun 11:00-23:00",
     "price": "CHF 38-54 (hammam ritual)",
@@ -1201,7 +1250,8 @@
       "noFrills": 3,
       "tradition": 6,
       "overall": 6
-    }
+    },
+    "nude": false
   },
   {
     "id": "sauna-am-see-uster",
@@ -1209,8 +1259,8 @@
     "city": "Uster",
     "country": "Switzerland",
     "address": "Strandbad Uster, 8610 Uster",
-    "lat": 47.3500,
-    "lng": 8.7210,
+    "lat": 47.35,
+    "lng": 8.721,
     "type": "wood-fired",
     "hours": "Oct-Mar: Mon-Thu 13:00-22:00, Fri-Sun 10:00-22:00",
     "price": "CHF 35 (reduced CHF 28)",
@@ -1226,7 +1276,8 @@
       "noFrills": 8,
       "tradition": 6,
       "overall": 8
-    }
+    },
+    "nude": false
   },
   {
     "id": "bains-des-paquis-geneva",
@@ -1251,7 +1302,8 @@
       "noFrills": 9,
       "tradition": 7,
       "overall": 8
-    }
+    },
+    "nude": false
   },
   {
     "id": "bains-des-rives-lausanne",
@@ -1259,8 +1311,8 @@
     "city": "Lausanne",
     "country": "Switzerland",
     "address": "Avenue de Rhodanie 23, 1007 Lausanne",
-    "lat": 46.5080,
-    "lng": 6.6310,
+    "lat": 46.508,
+    "lng": 6.631,
     "type": "wood-fired",
     "hours": "Oct-Mar: Mon-Tue 15:00-22:00, Wed-Sat 10:00-22:00, Sun 10:00-21:00",
     "price": "CHF 21 (reduced CHF 18)",
@@ -1276,7 +1328,8 @@
       "noFrills": 7,
       "tradition": 5,
       "overall": 7
-    }
+    },
+    "nude": false
   },
   {
     "id": "aquabasilea-pratteln",
@@ -1301,7 +1354,8 @@
       "noFrills": 3,
       "tradition": 4,
       "overall": 6
-    }
+    },
+    "nude": true
   },
   {
     "id": "sole-uno-rheinfelden",
@@ -1309,8 +1363,8 @@
     "city": "Rheinfelden",
     "country": "Switzerland",
     "address": "Roberstenstrasse 31, 4310 Rheinfelden",
-    "lat": 47.5540,
-    "lng": 7.7960,
+    "lat": 47.554,
+    "lng": 7.796,
     "type": "wood-fired",
     "hours": "Daily 08:00-22:30 (last entry 20:30)",
     "price": "CHF 33-52 (2h to full day)",
@@ -1326,7 +1380,8 @@
       "noFrills": 4,
       "tradition": 5,
       "overall": 6
-    }
+    },
+    "nude": true
   },
   {
     "id": "sauna-lorrainebad-bern",
@@ -1334,8 +1389,8 @@
     "city": "Bern",
     "country": "Switzerland",
     "address": "Lorraine public bath, Lorrainebad, 3013 Bern",
-    "lat": 46.9570,
-    "lng": 7.4410,
+    "lat": 46.957,
+    "lng": 7.441,
     "type": "wood-fired",
     "hours": "Nov-Mar: weekdays from 10:00, weekends from 09:00 (seasonal)",
     "price": "CHF 25 (reduced CHF 15)",
@@ -1351,7 +1406,8 @@
       "noFrills": 9,
       "tradition": 7,
       "overall": 9
-    }
+    },
+    "nude": true
   },
   {
     "id": "bernaqua-bern",
@@ -1359,8 +1415,8 @@
     "city": "Bern",
     "country": "Switzerland",
     "address": "Riedbachstrasse 98, 3027 Bern (Westside)",
-    "lat": 46.9410,
-    "lng": 7.3870,
+    "lat": 46.941,
+    "lng": 7.387,
     "type": "electric",
     "hours": "Sauna: daily 09:00-22:00",
     "price": "CHF 55 (swim + sauna)",
@@ -1376,7 +1432,8 @@
       "noFrills": 3,
       "tradition": 3,
       "overall": 5
-    }
+    },
+    "nude": true
   },
   {
     "id": "solbad-schonbuhl",
@@ -1384,8 +1441,8 @@
     "city": "Urtenen-Schonbuhl",
     "country": "Switzerland",
     "address": "Mattenweg 30, 3322 Urtenen-Schonbuhl",
-    "lat": 47.0140,
-    "lng": 7.5060,
+    "lat": 47.014,
+    "lng": 7.506,
     "type": "electric",
     "hours": "Mon-Fri 09:30-21:30, Sat-Sun 09:00-21:30",
     "price": "CHF 45 (saltwater bath + sauna)",
@@ -1401,7 +1458,8 @@
       "noFrills": 4,
       "tradition": 4,
       "overall": 5
-    }
+    },
+    "nude": true
   },
   {
     "id": "tamina-therme-bad-ragaz",
@@ -1409,8 +1467,8 @@
     "city": "Bad Ragaz",
     "country": "Switzerland",
     "address": "Hans Albrecht-Strasse, 7310 Bad Ragaz",
-    "lat": 46.9980,
-    "lng": 9.5020,
+    "lat": 46.998,
+    "lng": 9.502,
     "type": "wood-fired",
     "hours": "Mon-Thu & Sat-Sun 08:00-22:00, Fri 08:00-23:00",
     "price": "CHF 27-29 + CHF 18 sauna surcharge",
@@ -1426,7 +1484,8 @@
       "noFrills": 3,
       "tradition": 7,
       "overall": 7
-    }
+    },
+    "nude": true
   },
   {
     "id": "leukerbad-therme",
@@ -1434,8 +1493,8 @@
     "city": "Leukerbad",
     "country": "Switzerland",
     "address": "Rathausstrasse 32, 3954 Leukerbad",
-    "lat": 46.3790,
-    "lng": 7.6280,
+    "lat": 46.379,
+    "lng": 7.628,
     "type": "electric",
     "hours": "Daily 08:00-20:00 (sauna 10:00-19:00)",
     "price": "CHF 30 (3h) + CHF 15 sauna surcharge",
@@ -1451,7 +1510,8 @@
       "noFrills": 5,
       "tradition": 6,
       "overall": 6
-    }
+    },
+    "nude": true
   },
   {
     "id": "walliser-alpentherme-leukerbad",
@@ -1476,7 +1536,8 @@
       "noFrills": 3,
       "tradition": 6,
       "overall": 6
-    }
+    },
+    "nude": true
   },
   {
     "id": "les-bains-de-lavey",
@@ -1484,8 +1545,8 @@
     "city": "Lavey-les-Bains",
     "country": "Switzerland",
     "address": "Route des Bains 42, 1892 Lavey-les-Bains",
-    "lat": 46.2050,
-    "lng": 7.0290,
+    "lat": 46.205,
+    "lng": 7.029,
     "type": "electric",
     "hours": "Sun-Thu 09:00-19:00, Fri-Sat 09:00-20:00",
     "price": "CHF 30 (3h, includes sauna and steam)",
@@ -1501,7 +1562,8 @@
       "noFrills": 5,
       "tradition": 5,
       "overall": 6
-    }
+    },
+    "nude": true
   },
   {
     "id": "bains-de-la-gruyere-charmey",
@@ -1509,8 +1571,8 @@
     "city": "Charmey",
     "country": "Switzerland",
     "address": "Gros Plan 30, 1637 Charmey",
-    "lat": 46.6190,
-    "lng": 7.1680,
+    "lat": 46.619,
+    "lng": 7.168,
     "type": "electric",
     "hours": "Daily 09:00-21:00 (Fri-Sat until 22:00)",
     "price": "~CHF 40 (3h adult)",
@@ -1526,7 +1588,8 @@
       "noFrills": 5,
       "tradition": 5,
       "overall": 6
-    }
+    },
+    "nude": true
   },
   {
     "id": "bogn-engiadina-scuol",
@@ -1534,8 +1597,8 @@
     "city": "Scuol",
     "country": "Switzerland",
     "address": "Via dals Bogns 323, 7550 Scuol",
-    "lat": 46.7960,
-    "lng": 10.2990,
+    "lat": 46.796,
+    "lng": 10.299,
     "type": "electric",
     "hours": "Daily 08:00-21:45 (sauna open daily)",
     "price": "~CHF 50 (3h bath + sauna)",
@@ -1551,7 +1614,8 @@
       "noFrills": 5,
       "tradition": 7,
       "overall": 7
-    }
+    },
+    "nude": true
   },
   {
     "id": "mineralbad-rigi-kaltbad",
@@ -1576,7 +1640,8 @@
       "noFrills": 3,
       "tradition": 6,
       "overall": 7
-    }
+    },
+    "nude": true
   },
   {
     "id": "saunaboot-lucerne",
@@ -1584,8 +1649,8 @@
     "city": "Kastanienbaum (Lucerne)",
     "country": "Switzerland",
     "address": "Seehotel Kastanienbaum, St. Niklausenstrasse 105, 6047 Kastanienbaum",
-    "lat": 47.0150,
-    "lng": 8.3350,
+    "lat": 47.015,
+    "lng": 8.335,
     "type": "boat",
     "hours": "Apr-Sep, 4-hour sessions (booking required)",
     "price": "CHF 450 (for 2-6 people, 4 hours)",
@@ -1601,7 +1666,8 @@
       "noFrills": 6,
       "tradition": 4,
       "overall": 8
-    }
+    },
+    "nude": false
   },
   {
     "id": "therme-zurzach",
@@ -1609,8 +1675,8 @@
     "city": "Bad Zurzach",
     "country": "Switzerland",
     "address": "Dr. Martin Erb-Strasse 11, 5330 Bad Zurzach",
-    "lat": 47.5880,
-    "lng": 8.2870,
+    "lat": 47.588,
+    "lng": 8.287,
     "type": "wood-fired",
     "hours": "Daily 08:00-22:00 (last entry 20:30)",
     "price": "~CHF 60 (day pass)",
@@ -1626,7 +1692,8 @@
       "noFrills": 4,
       "tradition": 5,
       "overall": 7
-    }
+    },
+    "nude": true
   },
   {
     "id": "termali-salini-locarno",
@@ -1634,8 +1701,8 @@
     "city": "Locarno",
     "country": "Switzerland",
     "address": "Via G. Respini 7, 6600 Locarno",
-    "lat": 46.1710,
-    "lng": 8.7990,
+    "lat": 46.171,
+    "lng": 8.799,
     "type": "electric",
     "hours": "Daily ~09:00-21:30 (closed mid-Jun to early Jul for maintenance)",
     "price": "~CHF 35-45 (varies; Ticino Ticket discount)",
@@ -1651,7 +1718,8 @@
       "noFrills": 4,
       "tradition": 4,
       "overall": 5
-    }
+    },
+    "nude": true
   },
   {
     "id": "ovaverva-st-moritz",
@@ -1659,8 +1727,8 @@
     "city": "St. Moritz",
     "country": "Switzerland",
     "address": "Via Mezdi 17, 7500 St. Moritz",
-    "lat": 46.4970,
-    "lng": 9.8380,
+    "lat": 46.497,
+    "lng": 9.838,
     "type": "electric",
     "hours": "Daily 10:00-21:00 (check for renovation reopening dates)",
     "price": "CHF 16 (adult bath entry); treatments extra",
@@ -1676,7 +1744,8 @@
       "noFrills": 7,
       "tradition": 6,
       "overall": 6
-    }
+    },
+    "nude": true
   },
   {
     "id": "eau-la-la-davos",
@@ -1684,8 +1753,8 @@
     "city": "Davos",
     "country": "Switzerland",
     "address": "Promenade 90, 7270 Davos Platz",
-    "lat": 46.7930,
-    "lng": 9.8210,
+    "lat": 46.793,
+    "lng": 9.821,
     "type": "wood-fired",
     "hours": "Daily 10:00-21:00",
     "price": "~CHF 20-25 (adult entry)",
@@ -1701,7 +1770,8 @@
       "noFrills": 7,
       "tradition": 5,
       "overall": 6
-    }
+    },
+    "nude": true
   },
   {
     "id": "tschuggen-bergoase-arosa",
@@ -1709,8 +1779,8 @@
     "city": "Arosa",
     "country": "Switzerland",
     "address": "Tschuggentorweg 1, 7050 Arosa",
-    "lat": 46.7810,
-    "lng": 9.6790,
+    "lat": 46.781,
+    "lng": 9.679,
     "type": "electric",
     "hours": "Daily 08:00-20:00",
     "price": "Day spa pricing on request (luxury tier)",
@@ -1726,6 +1796,7 @@
       "noFrills": 1,
       "tradition": 4,
       "overall": 6
-    }
+    },
+    "nude": true
   }
 ]

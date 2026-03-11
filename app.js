@@ -279,6 +279,7 @@ function renderList() {
           <div class="sauna-card-meta">
             <span class="tag">${TYPE_LABELS[sauna.type] || sauna.type}</span>
             <span class="tag">${sauna.price}</span>
+            ${sauna.nude ? '<span class="tag tag-nude">DICKS OUT</span>' : ''}
             ${isVisited ? `<span class="tag">${'★'.repeat(profile.ratings[sauna.id])} visited</span>` : ''}
           </div>
         </div>
@@ -334,7 +335,7 @@ function openDetail(id) {
       <h3>Info</h3>
       <div class="detail-info-row">
         <span class="detail-info-label">Type</span>
-        <span class="detail-info-value">${TYPE_LABELS[sauna.type] || sauna.type}</span>
+        <span class="detail-info-value">${TYPE_LABELS[sauna.type] || sauna.type}${sauna.nude ? ' <span class="tag tag-nude">DICKS OUT</span>' : ''}</span>
       </div>
       <div class="detail-info-row">
         <span class="detail-info-label">Address</span>
