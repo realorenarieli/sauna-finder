@@ -134,19 +134,41 @@ function mergeSaunas() {
 }
 
 // ── Geocoding (Nominatim) ───────────────────
-async function geocodeAddress(address, city, country) {
-  const query = [address, city, country].filter(Boolean).join(', ');
+async function geocodeQuery(query) {
   try {
     const res = await fetch(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
-      { headers: { 'User-Agent': 'SaunaFinder/1.0' } }
+      { headers: { 'User-Agent': 'SaunaFinder/1.0 (sauna-finder@github)' } }
     );
     const data = await res.json();
     if (data.length > 0) {
       return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
     }
   } catch (e) {
-    console.error('Geocoding failed:', e);
+    console.error('Geocoding failed for query:', query, e);
+  }
+  return null;
+}
+
+async function geocodeAddress(address, city, country) {
+  // Try progressively broader queries until one works
+  const queries = [
+    [address, city, country],
+    [city, country],
+    [city],
+  ].map(parts => parts.filter(Boolean).join(', ')).filter(q => q.length > 0);
+
+  // Deduplicate
+  const seen = new Set();
+  let first = true;
+  for (const q of queries) {
+    if (seen.has(q)) continue;
+    seen.add(q);
+    // Nominatim asks for max 1 req/sec
+    if (!first) await new Promise(r => setTimeout(r, 1100));
+    first = false;
+    const result = await geocodeQuery(q);
+    if (result) return result;
   }
   return null;
 }
@@ -966,7 +988,17 @@ async function saveAddSauna() {
   });
 
   const address = document.getElementById('add-address').value.trim();
+
+  // Show geocoding progress
+  const saveBtn = document.getElementById('add-sauna-save');
+  const origText = saveBtn.textContent;
+  saveBtn.textContent = 'Locating on map...';
+  saveBtn.disabled = true;
+
   const coords = await geocodeAddress(address, city, country);
+
+  saveBtn.textContent = origText;
+  saveBtn.disabled = false;
 
   const saunaData = {
     name,
@@ -984,11 +1016,15 @@ async function saveAddSauna() {
     lng: coords ? coords.lng : null,
   };
 
-  addUserSauna(saunaData);
+  const id = addUserSauna(saunaData);
   mergeSaunas();
   repopulateCountryFilter();
   closeAddSauna();
   refreshAll();
+
+  if (!coords) {
+    alert(`"${name}" was saved but couldn't be placed on the map — geocoding failed for "${address || city}". It will appear in the list but not on the map.`);
+  }
 }
 
 function deleteUserSauna(id) {
