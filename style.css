@@ -682,6 +682,8 @@ a { color: var(--accent); }
   gap: 4px;
   flex-shrink: 0;
   margin-top: 2px;
+  position: relative;
+  z-index: 1;
 }
 
 .btn-icon {
