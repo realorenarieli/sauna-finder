@@ -1,0 +1,10 @@
+name = "sauna-finder-extractor"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "RATE_LIMITS"
+id = "3e20eea0aed6454fa4e6d9c15d5929a5"
+
+# Set the API key with:
+#   npx wrangler secret put ANTHROPIC_API_KEY

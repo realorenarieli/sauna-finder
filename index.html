@@ -11,8 +11,19 @@
   <!-- Sidebar -->
   <aside id="sidebar">
     <header class="sidebar-header">
-      <h1>Sauna Finder</h1>
-      <p class="subtitle">Finnish public sauna is the gold standard</p>
+      <div class="sidebar-header-row">
+        <div>
+          <h1>Sauna Finder</h1>
+          <p class="subtitle">Finnish public sauna is the gold standard</p>
+        </div>
+        <div class="header-actions">
+          <button id="csv-download-btn" class="btn-icon" title="Download CSV">&#8681;</button>
+          <label class="btn-icon" title="Upload CSV" id="csv-upload-label">&#8679;
+            <input type="file" id="csv-upload-input" accept=".csv" hidden />
+          </label>
+          <button id="add-sauna-btn" class="btn-icon btn-add" title="Add a sauna">+</button>
+        </div>
+      </div>
     </header>
 
     <div class="controls">
@@ -136,6 +147,124 @@
       <div class="modal-actions">
         <button id="rating-cancel" class="btn btn-secondary">Cancel</button>
         <button id="rating-save" class="btn btn-primary" disabled>Save Rating</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Sauna Modal -->
+  <div id="add-sauna-modal" class="modal hidden">
+    <div class="modal-content add-sauna">
+      <h2>Add a Sauna</h2>
+      <p>Paste a URL to auto-fill, or enter details manually.</p>
+
+      <div class="extract-section">
+        <div class="extract-row">
+          <input type="url" id="extract-url" placeholder="https://example.com/sauna" />
+          <button id="extract-btn" class="btn btn-primary btn-extract">Extract</button>
+        </div>
+        <p class="extract-status" id="extract-status"></p>
+      </div>
+
+      <div class="add-divider"><span>or fill in manually</span></div>
+
+      <div class="add-sauna-form">
+        <div class="form-row">
+          <label>Name *</label>
+          <input type="text" id="add-name" required />
+        </div>
+        <div class="form-row">
+          <label>City *</label>
+          <input type="text" id="add-city" />
+        </div>
+        <div class="form-row">
+          <label>Country *</label>
+          <input type="text" id="add-country" />
+        </div>
+        <div class="form-row">
+          <label>Address</label>
+          <input type="text" id="add-address" />
+        </div>
+        <div class="form-row">
+          <label>Type</label>
+          <select id="add-type">
+            <option value="wood-fired">Wood-fired</option>
+            <option value="smoke">Smoke</option>
+            <option value="electric">Electric</option>
+            <option value="russian-banya">Russian Banya</option>
+            <option value="korean-jjimjilbang">Jjimjilbang</option>
+            <option value="japanese-sento">Sento</option>
+            <option value="boat">Boat Sauna</option>
+            <option value="tent">Tent Sauna</option>
+            <option value="infrared">Infrared</option>
+            <option value="steam">Steam</option>
+            <option value="traditional-finnish">Traditional Finnish</option>
+            <option value="other" selected>Other</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Hours</label>
+          <input type="text" id="add-hours" placeholder="e.g. Mon-Fri 14-21" />
+        </div>
+        <div class="form-row">
+          <label>Price</label>
+          <input type="text" id="add-price" placeholder="e.g. 15 EUR" />
+        </div>
+        <div class="form-row">
+          <label>Website</label>
+          <input type="url" id="add-website" />
+        </div>
+        <div class="form-row">
+          <label>Nude</label>
+          <input type="checkbox" id="add-nude" />
+        </div>
+        <div class="form-row">
+          <label>Highlights</label>
+          <textarea id="add-highlights" rows="2" placeholder="What makes it special?"></textarea>
+        </div>
+
+        <h3 class="add-scores-title">Scores (0-10)</h3>
+        <div class="add-scores">
+          <label>
+            <span class="pref-label">Heat Source</span>
+            <input type="range" min="0" max="10" value="5" id="add-score-heatSource" />
+            <span class="pref-value">5</span>
+          </label>
+          <label>
+            <span class="pref-label">Loyly Quality</span>
+            <input type="range" min="0" max="10" value="5" id="add-score-loylyQuality" />
+            <span class="pref-value">5</span>
+          </label>
+          <label>
+            <span class="pref-label">Communal</span>
+            <input type="range" min="0" max="10" value="5" id="add-score-communalAtmosphere" />
+            <span class="pref-value">5</span>
+          </label>
+          <label>
+            <span class="pref-label">Water Access</span>
+            <input type="range" min="0" max="10" value="5" id="add-score-waterAccess" />
+            <span class="pref-value">5</span>
+          </label>
+          <label>
+            <span class="pref-label">No-Frills</span>
+            <input type="range" min="0" max="10" value="5" id="add-score-noFrills" />
+            <span class="pref-value">5</span>
+          </label>
+          <label>
+            <span class="pref-label">Tradition</span>
+            <input type="range" min="0" max="10" value="5" id="add-score-tradition" />
+            <span class="pref-value">5</span>
+          </label>
+          <label>
+            <span class="pref-label">Overall</span>
+            <input type="range" min="0" max="10" value="5" id="add-score-overall" />
+            <span class="pref-value">5</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="add-sauna-cancel" class="btn btn-secondary">Cancel</button>
+        <button id="add-sauna-save" class="btn btn-primary">Save Sauna</button>
       </div>
     </div>
   </div>

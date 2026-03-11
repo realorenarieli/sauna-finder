@@ -55,7 +55,13 @@ const TYPE_ICONS = {
   'other': '♨️',
 };
 
+// Worker URL — update after deploying Cloudflare Worker
+const WORKER_URL = 'https://sauna-finder-extractor.oren-arieli.workers.dev';
+
+const SCORE_DIMS = ['heatSource', 'loylyQuality', 'communalAtmosphere', 'waterAccess', 'noFrills', 'tradition', 'overall'];
+
 // ── State ────────────────────────────────────
+let dbSaunas = [];
 let saunas = [];
 let filteredSaunas = [];
 let profile = loadProfile();
@@ -85,6 +91,64 @@ function ensureProfileFields() {
 
 function saveProfile() {
   localStorage.setItem('saunaProfile', JSON.stringify(profile));
+}
+
+// ── User Saunas (localStorage) ──────────────
+function loadUserSaunas() {
+  try {
+    return JSON.parse(localStorage.getItem('userSaunas')) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveUserSaunas(list) {
+  try {
+    localStorage.setItem('userSaunas', JSON.stringify(list));
+  } catch (e) {
+    console.error('Failed to save user saunas:', e);
+  }
+}
+
+function addUserSauna(data) {
+  const id = 'user-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+  const sauna = {
+    ...data,
+    id,
+    userAdded: true,
+    addedAt: new Date().toISOString(),
+  };
+  const list = loadUserSaunas();
+  list.push(sauna);
+  saveUserSaunas(list);
+  return id;
+}
+
+function removeUserSauna(id) {
+  const list = loadUserSaunas().filter(s => s.id !== id);
+  saveUserSaunas(list);
+}
+
+function mergeSaunas() {
+  saunas = [...dbSaunas, ...loadUserSaunas()];
+}
+
+// ── Geocoding (Nominatim) ───────────────────
+async function geocodeAddress(address, city, country) {
+  const query = [address, city, country].filter(Boolean).join(', ');
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
+      { headers: { 'User-Agent': 'SaunaFinder/1.0' } }
+    );
+    const data = await res.json();
+    if (data.length > 0) {
+      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    }
+  } catch (e) {
+    console.error('Geocoding failed:', e);
+  }
+  return null;
 }
 
 // ── Scoring ──────────────────────────────────
@@ -225,6 +289,7 @@ function initMap() {
 function renderMarkers() {
   markerLayer.clearLayers();
   for (const sauna of filteredSaunas) {
+    if (sauna.lat == null || sauna.lng == null) continue;
     const isSelected = sauna.id === selectedId;
     const size = isSelected ? 32 : 26;
     const half = size / 2;
@@ -250,13 +315,14 @@ function renderMarkers() {
       color = isSelected ? '#fdf9f4' : '#6b5234';
     }
 
+    const borderStyle = sauna.userAdded ? 'dashed' : 'solid';
     const icon = L.divIcon({
       className: 'custom-marker',
       html: `<div style="
         width: ${size}px; height: ${size}px;
         border-radius: 50%;
         background: ${bg};
-        border: 2px solid ${border};
+        border: 2px ${borderStyle} ${border};
         box-shadow: 0 1px 4px rgba(59,47,32,0.25);
         display: flex; align-items: center; justify-content: center;
         font-size: ${fontSize}px; font-weight: 600;
@@ -299,6 +365,7 @@ function renderList() {
             <span class="tag">${TYPE_LABELS[sauna.type] || sauna.type}</span>
             <span class="tag">${sauna.price}</span>
             ${sauna.nude ? '<span class="tag tag-nude">DICKS OUT</span>' : ''}
+            ${sauna.userAdded ? '<span class="tag tag-user-added">Added by you</span>' : ''}
             ${isVisited ? `<span class="tag">${'★'.repeat(profile.ratings[sauna.id])} visited</span>` : ''}
           </div>
         </div>
@@ -421,14 +488,17 @@ function openDetail(id) {
       }
     </div>
     ${isVisited ? `<button class="link-btn" onclick="removeRating('${sauna.id}')">Remove visit</button>` : ''}
+    ${sauna.userAdded ? `<button class="link-btn link-btn-danger" onclick="deleteUserSauna('${sauna.id}')">Delete this sauna</button>` : ''}
   `;
 
   const panel = document.getElementById('detail-panel');
   panel.classList.remove('hidden');
   requestAnimationFrame(() => panel.classList.add('visible'));
 
-  // Fly to marker
-  map.flyTo([sauna.lat, sauna.lng], Math.max(map.getZoom(), 8), { duration: 0.8 });
+  // Fly to marker (skip if no coordinates)
+  if (sauna.lat != null && sauna.lng != null) {
+    map.flyTo([sauna.lat, sauna.lng], Math.max(map.getZoom(), 8), { duration: 0.8 });
+  }
 
   renderMarkers();
   renderList();
@@ -654,12 +724,13 @@ function populateCountryFilter() {
 
 // ── Refresh everything ───────────────────────
 function fitMapToFiltered() {
-  if (filteredSaunas.length === 0) return;
-  if (filteredSaunas.length === 1) {
-    map.flyTo([filteredSaunas[0].lat, filteredSaunas[0].lng], 12, { duration: 0.8 });
+  const withCoords = filteredSaunas.filter(s => s.lat != null && s.lng != null);
+  if (withCoords.length === 0) return;
+  if (withCoords.length === 1) {
+    map.flyTo([withCoords[0].lat, withCoords[0].lng], 12, { duration: 0.8 });
     return;
   }
-  const bounds = L.latLngBounds(filteredSaunas.map(s => [s.lat, s.lng]));
+  const bounds = L.latLngBounds(withCoords.map(s => [s.lat, s.lng]));
   map.flyToBounds(bounds, { padding: [40, 40], duration: 0.8 });
 }
 
@@ -730,10 +801,41 @@ function setupListeners() {
     });
   });
 
+  // Add Sauna modal
+  document.getElementById('add-sauna-btn').addEventListener('click', openAddSauna);
+  document.getElementById('add-sauna-cancel').addEventListener('click', closeAddSauna);
+  document.getElementById('add-sauna-save').addEventListener('click', saveAddSauna);
+  document.getElementById('extract-btn').addEventListener('click', extractFromUrl);
+
+  // Add Sauna score slider value displays
+  document.querySelectorAll('.add-scores input[type="range"]').forEach(slider => {
+    slider.addEventListener('input', () => {
+      slider.nextElementSibling.textContent = slider.value;
+    });
+  });
+
+  // Remove invalid class on input
+  ['add-name', 'add-city', 'add-country'].forEach(id => {
+    document.getElementById(id).addEventListener('input', function() {
+      this.classList.remove('invalid');
+    });
+  });
+
+  // CSV
+  document.getElementById('csv-download-btn').addEventListener('click', downloadCSV);
+  document.getElementById('csv-upload-input').addEventListener('change', e => {
+    if (e.target.files[0]) {
+      uploadCSV(e.target.files[0]);
+      e.target.value = ''; // reset so same file can be re-uploaded
+    }
+  });
+
   // Keyboard
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      if (!document.getElementById('rating-modal').classList.contains('hidden')) {
+      if (!document.getElementById('add-sauna-modal').classList.contains('hidden')) {
+        closeAddSauna();
+      } else if (!document.getElementById('rating-modal').classList.contains('hidden')) {
         closeRating();
       } else if (!document.getElementById('detail-panel').classList.contains('hidden')) {
         closeDetail();
@@ -742,11 +844,320 @@ function setupListeners() {
   });
 }
 
+// ── Add Sauna Modal ─────────────────────────
+function openAddSauna() {
+  resetAddSaunaForm();
+  document.getElementById('add-sauna-modal').classList.remove('hidden');
+}
+
+function closeAddSauna() {
+  document.getElementById('add-sauna-modal').classList.add('hidden');
+  resetAddSaunaForm();
+}
+
+function resetAddSaunaForm() {
+  document.getElementById('extract-url').value = '';
+  document.getElementById('extract-status').textContent = '';
+  document.getElementById('extract-status').className = 'extract-status';
+  document.getElementById('add-name').value = '';
+  document.getElementById('add-city').value = '';
+  document.getElementById('add-country').value = '';
+  document.getElementById('add-address').value = '';
+  document.getElementById('add-type').value = 'other';
+  document.getElementById('add-hours').value = '';
+  document.getElementById('add-price').value = '';
+  document.getElementById('add-website').value = '';
+  document.getElementById('add-nude').checked = false;
+  document.getElementById('add-highlights').value = '';
+  SCORE_DIMS.forEach(d => {
+    const el = document.getElementById('add-score-' + d);
+    el.value = 5;
+    el.nextElementSibling.textContent = '5';
+  });
+}
+
+async function extractFromUrl() {
+  const url = document.getElementById('extract-url').value.trim();
+  const status = document.getElementById('extract-status');
+
+  if (!url) {
+    status.textContent = 'Enter a URL first';
+    status.className = 'extract-status error';
+    return;
+  }
+
+  try { new URL(url); } catch {
+    status.textContent = 'Invalid URL';
+    status.className = 'extract-status error';
+    return;
+  }
+
+  status.textContent = 'Extracting sauna data...';
+  status.className = 'extract-status loading';
+  document.getElementById('extract-btn').disabled = true;
+
+  try {
+    const res = await fetch(WORKER_URL + '/extract', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      status.textContent = data.error || 'Extraction failed';
+      status.className = 'extract-status error';
+      return;
+    }
+
+    // Fill form with extracted data
+    if (data.name) document.getElementById('add-name').value = data.name;
+    if (data.city) document.getElementById('add-city').value = data.city;
+    if (data.country) document.getElementById('add-country').value = data.country;
+    if (data.address) document.getElementById('add-address').value = data.address;
+    if (data.type) document.getElementById('add-type').value = data.type;
+    if (data.hours) document.getElementById('add-hours').value = data.hours;
+    if (data.price) document.getElementById('add-price').value = data.price;
+    if (data.website) document.getElementById('add-website').value = data.website;
+    if (data.nude != null) document.getElementById('add-nude').checked = data.nude;
+    if (data.highlights) document.getElementById('add-highlights').value = data.highlights;
+    if (data.scores) {
+      SCORE_DIMS.forEach(d => {
+        const el = document.getElementById('add-score-' + d);
+        const val = data.scores[d] ?? 5;
+        el.value = val;
+        el.nextElementSibling.textContent = val;
+      });
+    }
+
+    status.textContent = 'Data extracted! Review and save below.';
+    status.className = 'extract-status success';
+  } catch (err) {
+    console.error('Extract error:', err);
+    status.textContent = 'Network error. Fill in manually.';
+    status.className = 'extract-status error';
+  } finally {
+    document.getElementById('extract-btn').disabled = false;
+  }
+}
+
+async function saveAddSauna() {
+  const name = document.getElementById('add-name').value.trim();
+  const city = document.getElementById('add-city').value.trim();
+  const country = document.getElementById('add-country').value.trim();
+
+  // Validate required fields
+  let valid = true;
+  ['add-name', 'add-city', 'add-country'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el.value.trim()) {
+      el.classList.add('invalid');
+      valid = false;
+    } else {
+      el.classList.remove('invalid');
+    }
+  });
+  if (!valid) return;
+
+  const scores = {};
+  SCORE_DIMS.forEach(d => {
+    scores[d] = parseInt(document.getElementById('add-score-' + d).value);
+  });
+
+  const address = document.getElementById('add-address').value.trim();
+  const coords = await geocodeAddress(address, city, country);
+
+  const saunaData = {
+    name,
+    city,
+    country,
+    address: address || `${city}, ${country}`,
+    type: document.getElementById('add-type').value,
+    hours: document.getElementById('add-hours').value.trim() || null,
+    price: document.getElementById('add-price').value.trim() || 'Unknown',
+    website: document.getElementById('add-website').value.trim() || null,
+    nude: document.getElementById('add-nude').checked,
+    highlights: document.getElementById('add-highlights').value.trim() || null,
+    scores,
+    lat: coords ? coords.lat : null,
+    lng: coords ? coords.lng : null,
+  };
+
+  addUserSauna(saunaData);
+  mergeSaunas();
+  repopulateCountryFilter();
+  closeAddSauna();
+  refreshAll();
+}
+
+function deleteUserSauna(id) {
+  removeUserSauna(id);
+  mergeSaunas();
+  repopulateCountryFilter();
+  closeDetail();
+  refreshAll();
+}
+
+// ── CSV Export / Import ─────────────────────
+function downloadCSV() {
+  const headers = [
+    'name', 'city', 'country', 'address', 'type', 'hours', 'price',
+    'website', 'nude', 'highlights', 'lat', 'lng',
+    'score_heatSource', 'score_loylyQuality', 'score_communalAtmosphere',
+    'score_waterAccess', 'score_noFrills', 'score_tradition', 'score_overall',
+  ];
+
+  const escape = val => {
+    if (val == null) return '';
+    const str = String(val);
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+      return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+  };
+
+  const rows = saunas.map(s => [
+    s.name, s.city, s.country, s.address, s.type, s.hours, s.price,
+    s.website, s.nude, s.highlights, s.lat, s.lng,
+    s.scores.heatSource, s.scores.loylyQuality, s.scores.communalAtmosphere,
+    s.scores.waterAccess, s.scores.noFrills, s.scores.tradition, s.scores.overall,
+  ].map(escape).join(','));
+
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'saunas.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function uploadCSV(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const text = e.target.result;
+      const lines = text.split(/\r?\n/).filter(l => l.trim());
+      if (lines.length < 2) return;
+
+      const headers = parseCSVLine(lines[0]);
+      const nameIdx = headers.indexOf('name');
+      const cityIdx = headers.indexOf('city');
+      const countryIdx = headers.indexOf('country');
+
+      if (nameIdx === -1 || cityIdx === -1 || countryIdx === -1) {
+        alert('CSV must have name, city, and country columns.');
+        return;
+      }
+
+      let added = 0;
+      for (let i = 1; i < lines.length; i++) {
+        const cols = parseCSVLine(lines[i]);
+        if (!cols[nameIdx] || !cols[cityIdx] || !cols[countryIdx]) continue;
+
+        const get = h => cols[headers.indexOf(h)] || null;
+        const getNum = h => {
+          const v = parseInt(get(h));
+          return Number.isFinite(v) && v >= 0 && v <= 10 ? v : 5;
+        };
+
+        // Skip if duplicate name + city
+        const existingName = cols[nameIdx].trim();
+        const existingCity = cols[cityIdx].trim();
+        if (saunas.some(s => s.name === existingName && s.city === existingCity)) continue;
+
+        const saunaData = {
+          name: existingName,
+          city: existingCity,
+          country: cols[countryIdx].trim(),
+          address: get('address') || `${existingCity}, ${cols[countryIdx].trim()}`,
+          type: get('type') || 'other',
+          hours: get('hours'),
+          price: get('price') || 'Unknown',
+          website: get('website'),
+          nude: get('nude') === 'true',
+          highlights: get('highlights'),
+          lat: parseFloat(get('lat')) || null,
+          lng: parseFloat(get('lng')) || null,
+          scores: {
+            heatSource: getNum('score_heatSource'),
+            loylyQuality: getNum('score_loylyQuality'),
+            communalAtmosphere: getNum('score_communalAtmosphere'),
+            waterAccess: getNum('score_waterAccess'),
+            noFrills: getNum('score_noFrills'),
+            tradition: getNum('score_tradition'),
+            overall: getNum('score_overall'),
+          },
+        };
+
+        addUserSauna(saunaData);
+        added++;
+      }
+
+      mergeSaunas();
+      repopulateCountryFilter();
+      refreshAll();
+      alert(`Imported ${added} sauna${added !== 1 ? 's' : ''}.`);
+    } catch (err) {
+      console.error('CSV import error:', err);
+      alert('Failed to parse CSV file.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"' && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else if (ch === '"') {
+        inQuotes = false;
+      } else {
+        current += ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ',') {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
+
+// ── Country filter repopulation ─────────────
+function repopulateCountryFilter() {
+  const select = document.getElementById('filter-country');
+  const current = select.value;
+  select.innerHTML = '<option value="all">All Countries</option>';
+  const countries = [...new Set(saunas.map(s => s.country))].sort();
+  for (const c of countries) {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    select.appendChild(opt);
+  }
+  // Restore selection if still valid
+  if (countries.includes(current)) select.value = current;
+}
+
 // ── Init ─────────────────────────────────────
 async function init() {
   try {
     const res = await fetch('data/saunas.json');
-    saunas = await res.json();
+    dbSaunas = await res.json();
   } catch (err) {
     console.error('Failed to load saunas:', err);
     document.getElementById('sauna-list').innerHTML =
@@ -754,6 +1165,7 @@ async function init() {
     return;
   }
 
+  mergeSaunas();
   ensureProfileFields();
   initMap();
   populateCountryFilter();
@@ -770,5 +1182,6 @@ async function init() {
 window.openRating = openRating;
 window.removeRating = removeRating;
 window.toggleWishlist = toggleWishlist;
+window.deleteUserSauna = deleteUserSauna;
 
 init();
