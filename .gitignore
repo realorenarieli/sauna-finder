@@ -1,0 +1,11 @@
+# Secrets and local config
+.env
+.env.local
+.env.*.local
+
+# Wrangler local state
+.wrangler/
+worker/.wrangler/
+
+# macOS
+.DS_Store
