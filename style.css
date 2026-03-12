@@ -553,6 +553,22 @@ a { color: var(--accent); }
   letter-spacing: 0.3px;
 }
 
+.tag-aufguss {
+  background: #fef3e2;
+  color: #8b5e1a;
+  border-color: #d4a040;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.tag-gender {
+  background: #f0e4f6;
+  color: #6b3a8b;
+  border-color: #b490c8;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
 .score-col {
   display: flex;
   flex-direction: column;

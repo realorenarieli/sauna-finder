@@ -55,6 +55,14 @@ const TYPE_ICONS = {
   'other': '♨️',
 };
 
+const GENDER_LABELS = {
+  'mixed': 'Mixed',
+  'separated': 'M/F Separated',
+  'mixed-separated': 'Mixed + Separated Days',
+  'women-only': 'Women Only',
+  'men-only': 'Men Only',
+};
+
 // Worker URL — update after deploying Cloudflare Worker
 const WORKER_URL = 'https://sauna-finder-extractor.oren-arieli.workers.dev';
 
@@ -380,6 +388,8 @@ function renderList() {
             <span class="tag">${TYPE_LABELS[sauna.type] || sauna.type}</span>
             <span class="tag">${sauna.price}</span>
             ${sauna.nude ? '<span class="tag tag-nude">DICKS OUT</span>' : ''}
+            ${sauna.aufguss ? '<span class="tag tag-aufguss">AUFGUSS</span>' : ''}
+            ${sauna.gender && sauna.gender !== 'mixed' ? `<span class="tag tag-gender">${GENDER_LABELS[sauna.gender] || sauna.gender}</span>` : ''}
             ${sauna.communityAdded ? '<span class="tag tag-user-added">Community</span>' : ''}
             ${isVisited ? `<span class="tag">${'★'.repeat(profile.ratings[sauna.id])} visited</span>` : ''}
           </div>
@@ -437,7 +447,7 @@ function openDetail(id) {
       <h3>Info</h3>
       <div class="detail-info-row">
         <span class="detail-info-label">Type</span>
-        <span class="detail-info-value">${TYPE_LABELS[sauna.type] || sauna.type}${sauna.nude ? ' <span class="tag tag-nude">DICKS OUT</span>' : ''}</span>
+        <span class="detail-info-value">${TYPE_LABELS[sauna.type] || sauna.type}${sauna.nude ? ' <span class="tag tag-nude">DICKS OUT</span>' : ''}${sauna.aufguss ? ' <span class="tag tag-aufguss">AUFGUSS</span>' : ''}${sauna.gender ? ` <span class="tag tag-gender">${GENDER_LABELS[sauna.gender] || sauna.gender}</span>` : ''}</span>
       </div>
       <div class="detail-info-row">
         <span class="detail-info-label">Address</span>
@@ -990,6 +1000,8 @@ function resetAddSaunaForm() {
   document.getElementById('add-price').value = '';
   document.getElementById('add-website').value = '';
   document.getElementById('add-nude').checked = false;
+  document.getElementById('add-aufguss').checked = false;
+  document.getElementById('add-gender').value = 'mixed';
   document.getElementById('add-highlights').value = '';
   SCORE_DIMS.forEach(d => {
     const el = document.getElementById('add-score-' + d);
@@ -1043,6 +1055,8 @@ async function extractFromUrl() {
     if (data.price) document.getElementById('add-price').value = data.price;
     if (data.website) document.getElementById('add-website').value = data.website;
     if (data.nude != null) document.getElementById('add-nude').checked = data.nude;
+    if (data.aufguss != null) document.getElementById('add-aufguss').checked = data.aufguss;
+    if (data.gender) document.getElementById('add-gender').value = data.gender;
     if (data.highlights) document.getElementById('add-highlights').value = data.highlights;
     if (data.scores) {
       SCORE_DIMS.forEach(d => {
@@ -1110,6 +1124,8 @@ async function saveAddSauna() {
     price: document.getElementById('add-price').value.trim() || 'Unknown',
     website: document.getElementById('add-website').value.trim() || null,
     nude: document.getElementById('add-nude').checked,
+    aufguss: document.getElementById('add-aufguss').checked,
+    gender: document.getElementById('add-gender').value,
     highlights: document.getElementById('add-highlights').value.trim() || null,
     scores,
     lat: coords ? coords.lat : null,
@@ -1150,7 +1166,7 @@ async function deleteUserSauna(id) {
 function downloadCSV() {
   const headers = [
     'name', 'city', 'country', 'address', 'type', 'hours', 'price',
-    'website', 'nude', 'highlights', 'lat', 'lng',
+    'website', 'nude', 'aufguss', 'gender', 'highlights', 'lat', 'lng',
     'score_heatSource', 'score_loylyQuality', 'score_communalAtmosphere',
     'score_waterAccess', 'score_noFrills', 'score_tradition', 'score_overall',
   ];
@@ -1221,6 +1237,8 @@ async function uploadCSV(file) {
       price: get('price') || 'Unknown',
       website: get('website'),
       nude: get('nude') === 'true',
+      aufguss: get('aufguss') === 'true',
+      gender: get('gender') || 'mixed',
       highlights: get('highlights'),
       lat: parseFloat(get('lat')) || null,
       lng: parseFloat(get('lng')) || null,

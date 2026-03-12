@@ -55,6 +55,7 @@ Return JSON with exactly these fields:
   "website": "${url}",
   "highlights": "2-3 sentence summary of what makes this sauna special, or null",
   "nude": true or false or null,
+  "aufguss": true or false or null,
   "scores": {
     "heatSource": 0-10,
     "loylyQuality": 0-10,
@@ -162,6 +163,8 @@ function validateSaunaData(data) {
     website: typeof data.website === 'string' ? data.website.slice(0, 500) : null,
     highlights: typeof data.highlights === 'string' ? data.highlights.slice(0, 500) : null,
     nude: typeof data.nude === 'boolean' ? data.nude : false,
+    aufguss: typeof data.aufguss === 'boolean' ? data.aufguss : false,
+    gender: ['mixed', 'separated', 'mixed-separated', 'women-only', 'men-only'].includes(data.gender) ? data.gender : 'mixed',
     scores: validScores,
     lat,
     lng,
