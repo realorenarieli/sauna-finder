@@ -748,6 +748,7 @@ function applyFilters() {
   const type = document.getElementById('filter-type').value;
   const country = document.getElementById('filter-country').value;
   const nude = document.getElementById('filter-nude').value;
+  const gender = document.getElementById('filter-gender').value;
   const aufguss = document.getElementById('filter-aufguss').value;
   const wishlist = document.getElementById('filter-wishlist').value;
 
@@ -757,6 +758,7 @@ function applyFilters() {
     if (country !== 'all' && s.country !== country) return false;
     if (nude === 'nude' && !s.nude) return false;
     if (nude === 'clothed' && s.nude) return false;
+    if (gender !== 'all' && (s.gender || 'mixed') !== gender) return false;
     if (aufguss === 'yes' && !s.aufguss) return false;
     if (wishlist === 'wishlist' && !profile.wishlist[s.id]) return false;
     return true;
@@ -794,6 +796,7 @@ function updateFilterBadge() {
     document.getElementById('filter-type').value !== 'all',
     document.getElementById('filter-country').value !== 'all',
     document.getElementById('filter-nude').value !== 'all',
+    document.getElementById('filter-gender').value !== 'all',
     document.getElementById('filter-aufguss').value !== 'all',
     document.getElementById('filter-wishlist').value !== 'all',
   ].filter(Boolean).length;
@@ -851,6 +854,7 @@ function setupListeners() {
   document.getElementById('sort-by').addEventListener('change', refreshAll);
   document.getElementById('filter-type').addEventListener('change', () => { updateFilterBadge(); refreshAll(); });
   document.getElementById('filter-nude').addEventListener('change', () => { updateFilterBadge(); refreshAll(); });
+  document.getElementById('filter-gender').addEventListener('change', () => { updateFilterBadge(); refreshAll(); });
   document.getElementById('filter-aufguss').addEventListener('change', () => { updateFilterBadge(); refreshAll(); });
   document.getElementById('filter-wishlist').addEventListener('change', () => { updateFilterBadge(); refreshAll(); });
   document.getElementById('filter-country').addEventListener('change', () => { updateFilterBadge(); refreshAll(true); });
@@ -875,6 +879,7 @@ function setupListeners() {
     document.getElementById('filter-type').value = 'all';
     document.getElementById('filter-country').value = 'all';
     document.getElementById('filter-nude').value = 'all';
+    document.getElementById('filter-gender').value = 'all';
     document.getElementById('filter-aufguss').value = 'all';
     document.getElementById('filter-wishlist').value = 'all';
     updateFilterBadge();
