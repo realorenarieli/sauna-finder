@@ -164,7 +164,7 @@ function validateSaunaData(data) {
     highlights: typeof data.highlights === 'string' ? data.highlights.slice(0, 500) : null,
     nude: typeof data.nude === 'boolean' ? data.nude : false,
     aufguss: typeof data.aufguss === 'boolean' ? data.aufguss : false,
-    gender: ['mixed', 'separated', 'mixed-separated', 'women-only', 'men-only'].includes(data.gender) ? data.gender : 'mixed',
+    gender: ['mixed', 'segregated', 'women-only', 'men-only'].includes(data.gender) ? data.gender : 'mixed',
     scores: validScores,
     lat,
     lng,

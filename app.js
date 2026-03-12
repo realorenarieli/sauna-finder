@@ -57,8 +57,7 @@ const TYPE_ICONS = {
 
 const GENDER_LABELS = {
   'mixed': 'Mixed',
-  'separated': 'M/F Separated',
-  'mixed-separated': 'Mixed + Separated Days',
+  'segregated': 'Segregated',
   'women-only': 'Women Only',
   'men-only': 'Men Only',
 };
