@@ -3,8 +3,8 @@
 ## Tech Stack
 - Vanilla HTML/CSS/JS — no build step
 - Leaflet.js + OpenStreetMap for interactive maps
-- Static JSON data (`data/saunas.json`) as the sauna database
-- Deployed via GitHub Pages
+- Cloudflare Worker + KV for sauna data and URL extraction API
+- Deployed via GitHub Pages (frontend) + Cloudflare Workers (backend)
 
 ## Commands
 ```bash
@@ -32,13 +32,18 @@ Score badges:
 - 0-19: "Stretching the Definition"
 
 ## Data Model
-See `data/saunas.json` for the schema. Each sauna has scores on 7 dimensions (0-10 each), combined into a weighted total.
+All saunas stored in Cloudflare KV (namespace `COMMUNITY_SAUNAS`). Base saunas have `curated: true`, user-added saunas have `communityAdded: true`. Each sauna has scores on 7 dimensions (0-10 each), combined into a weighted total.
+
+KV keys: `sauna:<id>` → JSON, `sauna:_index` → array of all IDs.
 
 ## Project Structure
 ```
 index.html          — Main app
 style.css           — Styles
 app.js              — Map logic, filtering, scoring
-data/saunas.json    — Sauna database
+worker/             — Cloudflare Worker (KV API + URL extraction)
+  src/index.js      — Worker entry point
+  wrangler.toml     — Worker config + KV bindings
+  seed-kv.js        — One-time script to seed base saunas into KV
 assets/             — Icons, markers
 ```

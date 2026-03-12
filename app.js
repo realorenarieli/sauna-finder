@@ -61,7 +61,6 @@ const WORKER_URL = 'https://sauna-finder-extractor.oren-arieli.workers.dev';
 const SCORE_DIMS = ['heatSource', 'loylyQuality', 'communalAtmosphere', 'waterAccess', 'noFrills', 'tradition', 'overall'];
 
 // ── State ────────────────────────────────────
-let dbSaunas = [];
 let saunas = [];
 let filteredSaunas = [];
 let profile = loadProfile();
@@ -93,18 +92,12 @@ function saveProfile() {
   localStorage.setItem('saunaProfile', JSON.stringify(profile));
 }
 
-// ── Community Saunas (Worker API) ───────────
-let communitySaunas = [];
+// ── Saunas API (Worker KV) ──────────────────
 
-async function fetchCommunitySaunas() {
-  try {
-    const res = await fetch(WORKER_URL + '/saunas');
-    if (res.ok) {
-      communitySaunas = await res.json();
-    }
-  } catch (e) {
-    console.error('Failed to fetch community saunas:', e);
-  }
+async function fetchSaunas() {
+  const res = await fetch(WORKER_URL + '/saunas');
+  if (!res.ok) throw new Error('Failed to load saunas');
+  saunas = await res.json();
 }
 
 async function addCommunitySauna(data) {
@@ -118,7 +111,7 @@ async function addCommunitySauna(data) {
     throw new Error(err.error || 'Failed to save sauna');
   }
   const sauna = await res.json();
-  communitySaunas.push(sauna);
+  saunas.push(sauna);
   return sauna;
 }
 
@@ -130,11 +123,7 @@ async function removeCommunitySauna(id) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || 'Failed to delete sauna');
   }
-  communitySaunas = communitySaunas.filter(s => s.id !== id);
-}
-
-function mergeSaunas() {
-  saunas = [...dbSaunas, ...communitySaunas];
+  saunas = saunas.filter(s => s.id !== id);
 }
 
 // ── Geocoding (Nominatim) ───────────────────
@@ -1132,7 +1121,6 @@ async function saveAddSauna() {
 
   try {
     await addCommunitySauna(saunaData);
-    mergeSaunas();
     repopulateCountryFilter();
     closeAddSauna();
     refreshAll();
@@ -1150,7 +1138,6 @@ async function saveAddSauna() {
 async function deleteUserSauna(id) {
   try {
     await removeCommunitySauna(id);
-    mergeSaunas();
     repopulateCountryFilter();
     closeDetail();
     refreshAll();
@@ -1256,7 +1243,6 @@ async function uploadCSV(file) {
     }
   }
 
-  mergeSaunas();
   repopulateCountryFilter();
   refreshAll();
   let msg = `Imported ${added} sauna${added !== 1 ? 's' : ''}.`;
@@ -1313,19 +1299,13 @@ function repopulateCountryFilter() {
 // ── Init ─────────────────────────────────────
 async function init() {
   try {
-    const res = await fetch('data/saunas.json');
-    dbSaunas = await res.json();
+    await fetchSaunas();
   } catch (err) {
     console.error('Failed to load saunas:', err);
     document.getElementById('sauna-list').innerHTML =
-      '<p style="padding:20px;color:var(--score-bottom)">Failed to load sauna data. Make sure you\'re running a local server.</p>';
+      '<p style="padding:20px;color:var(--score-bottom)">Failed to load sauna data. Check your connection.</p>';
     return;
   }
-
-  // Fetch community-added saunas from worker (non-blocking on failure)
-  await fetchCommunitySaunas();
-
-  mergeSaunas();
   ensureProfileFields();
   initMap();
   populateCountryFilter();
