@@ -794,6 +794,8 @@ function applyFilters() {
     if (gender !== 'all' && (s.gender || 'mixed') !== gender) return false;
     if (aufguss === 'yes' && !s.aufguss) return false;
     if (wishlist === 'wishlist' && !profile.wishlist[s.id]) return false;
+    if (wishlist === 'visited' && !profile.ratings[s.id]) return false;
+    if (wishlist === 'community' && !s.communityAdded) return false;
     return true;
   });
 
