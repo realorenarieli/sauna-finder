@@ -147,6 +147,10 @@ function validateSaunaData(data) {
   let type = String(data.type || 'other').toLowerCase();
   if (!SAUNA_TYPES.includes(type)) type = 'other';
 
+  // Validate lat/lng if provided
+  const lat = typeof data.lat === 'number' && isFinite(data.lat) && data.lat >= -90 && data.lat <= 90 ? data.lat : null;
+  const lng = typeof data.lng === 'number' && isFinite(data.lng) && data.lng >= -180 && data.lng <= 180 ? data.lng : null;
+
   return {
     name: typeof data.name === 'string' ? data.name.slice(0, 200) : null,
     city: typeof data.city === 'string' ? data.city.slice(0, 100) : null,
@@ -159,6 +163,8 @@ function validateSaunaData(data) {
     highlights: typeof data.highlights === 'string' ? data.highlights.slice(0, 500) : null,
     nude: typeof data.nude === 'boolean' ? data.nude : false,
     scores: validScores,
+    lat,
+    lng,
   };
 }
 
