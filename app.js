@@ -62,6 +62,20 @@ const GENDER_LABELS = {
   'men-only': 'Men Only',
 };
 
+const GEAR_LABELS = {
+  towel:    { bring: 'Bring towel', rental: 'Towel rental', provided: 'Towel provided' },
+  swimwear: { required: 'Swimwear required', optional: 'Swimwear optional', nude: 'Nude only' },
+  lockers:  { free: 'Free lockers', coin: 'Coin lockers', 'bring-lock': 'Bring a lock', none: 'No lockers' },
+  shower:   { full: 'Showers + toiletries', basic: 'Showers (bring soap)', none: 'No showers' },
+};
+
+const GEAR_ICONS = {
+  towel:    { bring: '🧺', rental: '🔄', provided: '✅' },
+  swimwear: { required: '👙', optional: '🤷', nude: '🫣' },
+  lockers:  { free: '🔒', coin: '🪙', 'bring-lock': '🔓', none: '❌' },
+  shower:   { full: '🚿', basic: '🧴', none: '🚫' },
+};
+
 // Worker URL — update after deploying Cloudflare Worker
 const WORKER_URL = 'https://sauna-finder-extractor.oren-arieli.workers.dev';
 
@@ -485,6 +499,20 @@ function openDetail(id) {
       <h3>What's Special</h3>
       <p class="detail-highlights">${sauna.highlights}</p>
     </div>
+
+    ${sauna.gear ? `<div class="detail-section">
+      <h3>What to Bring</h3>
+      <div class="gear-grid">
+        ${['towel', 'swimwear', 'lockers', 'shower'].map(cat => {
+          const val = sauna.gear[cat];
+          if (!val) return '';
+          return `<div class="gear-item">
+            <span class="gear-icon">${GEAR_ICONS[cat][val] || ''}</span>
+            <span class="gear-text">${GEAR_LABELS[cat][val] || val}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>` : ''}
 
     <div class="detail-section">
       <h3>Score Breakdown</h3>
@@ -1171,6 +1199,12 @@ async function saveAddSauna() {
     aufguss: document.getElementById('add-aufguss').checked,
     gender: document.getElementById('add-gender').value,
     highlights: document.getElementById('add-highlights').value.trim() || null,
+    gear: {
+      towel: document.getElementById('add-gear-towel').value,
+      swimwear: document.getElementById('add-gear-swimwear').value,
+      lockers: document.getElementById('add-gear-lockers').value,
+      shower: document.getElementById('add-gear-shower').value,
+    },
     scores,
     lat: coords ? coords.lat : null,
     lng: coords ? coords.lng : null,
