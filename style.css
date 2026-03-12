@@ -830,6 +830,54 @@ a { color: var(--accent); }
 .weight-arrow { color: var(--text-3); }
 .weight-yours { font-weight: 600; color: var(--accent); }
 
+/* ── More Like This ──────────────────────────── */
+.similar-saunas {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.similar-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.similar-item:hover {
+  background: var(--hover);
+  border-color: var(--accent);
+}
+
+.similar-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.similar-location {
+  font-size: 11px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.similar-score {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  min-width: 24px;
+  text-align: right;
+}
+
 /* ── Buttons ─────────────────────────────────── */
 .detail-actions { padding: 16px 20px; }
 

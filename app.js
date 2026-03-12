@@ -183,6 +183,21 @@ function finnishScore(sauna) {
   return calcScore(sauna, DEFAULT_WEIGHTS);
 }
 
+function findSimilar(sauna, count = 5) {
+  const dims = Object.keys(DEFAULT_WEIGHTS);
+  return saunas
+    .filter(s => s.id !== sauna.id)
+    .map(s => {
+      const dist = Math.sqrt(dims.reduce((sum, d) => {
+        const diff = (sauna.scores[d] || 5) - (s.scores[d] || 5);
+        return sum + diff * diff;
+      }, 0));
+      return { sauna: s, dist };
+    })
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, count);
+}
+
 function scoreTier(score) {
   if (score >= 80) return { label: 'Practically Finnish', cls: 'top' };
   if (score >= 60) return { label: 'Solid Sauna', cls: 'high' };
@@ -498,6 +513,19 @@ function openDetail(id) {
       </div>` : ''}
     </div>
 
+    <div class="detail-section">
+      <h3>More Like This</h3>
+      <div class="similar-saunas">
+        ${findSimilar(sauna).map(({ sauna: s, dist }) => `
+          <div class="similar-item" data-id="${s.id}">
+            <span class="similar-name">${s.name}</span>
+            <span class="similar-location">${s.city}, ${s.country}</span>
+            <span class="similar-score">${Math.round(finnishScore(s))}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
     <div class="detail-actions">
       <button class="btn btn-wishlist ${isWishlisted ? 'wishlisted' : ''}" onclick="toggleWishlist('${sauna.id}')">
         ${isWishlisted ? '&#9829; On Wishlist' : '&#9825; Add to Wishlist'}
@@ -514,6 +542,11 @@ function openDetail(id) {
     ${isVisited ? `<button class="link-btn" onclick="removeRating('${sauna.id}')">Remove visit</button>` : ''}
     ${sauna.communityAdded ? `<button class="link-btn link-btn-danger" onclick="deleteUserSauna('${sauna.id}')">Delete this sauna</button>` : ''}
   `;
+
+  // Similar sauna click handlers
+  content.querySelectorAll('.similar-item').forEach(item => {
+    item.addEventListener('click', () => openDetail(item.dataset.id));
+  });
 
   const panel = document.getElementById('detail-panel');
   panel.classList.remove('hidden');
