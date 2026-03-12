@@ -69,7 +69,7 @@ let selectedId = null;
 let ratingTarget = null;
 let ratingValue = 0;
 let map, markerLayer;
-let markerMode = 'score'; // 'score' or 'type'
+let markerMode = 'type'; // 'score' or 'type' or 'nude'
 
 // ── Profile (localStorage) ───────────────────
 function loadProfile() {
@@ -293,8 +293,8 @@ function initMap() {
     onAdd() {
       const container = L.DomUtil.create('div', 'marker-toggle leaflet-bar');
       container.innerHTML = `
-        <button class="marker-toggle-btn active" data-mode="score" title="Show scores">123</button>
-        <button class="marker-toggle-btn" data-mode="type" title="Show types">⛵</button>
+        <button class="marker-toggle-btn" data-mode="score" title="Show scores">123</button>
+        <button class="marker-toggle-btn active" data-mode="type" title="Show types">⛵</button>
         <button class="marker-toggle-btn" data-mode="nude" title="Show nude policy">🍆</button>
       `;
       L.DomEvent.disableClickPropagation(container);
@@ -661,6 +661,58 @@ function renderTasteProfile() {
   }
 }
 
+// ── Taste Profile Edit Mode ─────────────────
+function openTasteEdit() {
+  const slidersEl = document.getElementById('taste-sliders');
+  const editEl = document.getElementById('taste-edit');
+  const barsEl = document.getElementById('taste-bars');
+  const hintEl = document.getElementById('taste-hint');
+
+  // Get current preference values (from profile or defaults at 5)
+  const current = profile.preferences || {};
+  const dims = Object.keys(DEFAULT_WEIGHTS);
+
+  slidersEl.innerHTML = dims.map(d => {
+    const val = current[d] != null ? current[d] : 5;
+    return `
+      <label>
+        <span class="taste-slider-label">${DIMENSION_LABELS[d]}</span>
+        <input type="range" min="0" max="10" value="${val}" data-dim="${d}" />
+        <span class="taste-slider-value">${val}</span>
+      </label>
+    `;
+  }).join('');
+
+  // Wire up live value display
+  slidersEl.querySelectorAll('input[type="range"]').forEach(slider => {
+    slider.addEventListener('input', () => {
+      slider.nextElementSibling.textContent = slider.value;
+    });
+  });
+
+  barsEl.classList.add('hidden');
+  hintEl.classList.add('hidden');
+  editEl.classList.remove('hidden');
+}
+
+function closeTasteEdit() {
+  document.getElementById('taste-edit').classList.add('hidden');
+  document.getElementById('taste-bars').classList.remove('hidden');
+  document.getElementById('taste-hint').classList.remove('hidden');
+}
+
+function saveTasteEdit() {
+  const prefs = {};
+  document.querySelectorAll('#taste-sliders input[type="range"]').forEach(slider => {
+    prefs[slider.dataset.dim] = parseInt(slider.value);
+  });
+  profile.preferences = prefs;
+  profile.onboardingDone = true;
+  saveProfile();
+  closeTasteEdit();
+  refreshAll();
+}
+
 // ── "You Might Love" ─────────────────────────
 function renderRecommendations() {
   // Remove existing
@@ -736,6 +788,28 @@ function parsePriceApprox(priceStr) {
   return match ? parseFloat(match[0]) : 999;
 }
 
+// ── Filter badge ────────────────────────────
+function updateFilterBadge() {
+  const activeCount = [
+    document.getElementById('filter-type').value !== 'all',
+    document.getElementById('filter-country').value !== 'all',
+    document.getElementById('filter-nude').value !== 'all',
+    document.getElementById('filter-wishlist').value !== 'all',
+  ].filter(Boolean).length;
+
+  const badge = document.getElementById('filter-badge');
+  const btn = document.getElementById('filter-toggle');
+  if (activeCount > 0) {
+    badge.textContent = activeCount;
+    badge.classList.remove('hidden');
+    btn.classList.add('active');
+  } else {
+    badge.classList.add('hidden');
+    btn.classList.remove('active');
+    // Collapse drawer if no active filters and it's open
+  }
+}
+
 // ── Country filter population ────────────────
 function populateCountryFilter() {
   const countries = [...new Set(saunas.map(s => s.country))].sort();
@@ -774,10 +848,35 @@ function setupListeners() {
   // Search & filters
   document.getElementById('search').addEventListener('input', refreshAll);
   document.getElementById('sort-by').addEventListener('change', refreshAll);
-  document.getElementById('filter-type').addEventListener('change', refreshAll);
-  document.getElementById('filter-nude').addEventListener('change', refreshAll);
-  document.getElementById('filter-wishlist').addEventListener('change', refreshAll);
-  document.getElementById('filter-country').addEventListener('change', () => refreshAll(true));
+  document.getElementById('filter-type').addEventListener('change', () => { updateFilterBadge(); refreshAll(); });
+  document.getElementById('filter-nude').addEventListener('change', () => { updateFilterBadge(); refreshAll(); });
+  document.getElementById('filter-wishlist').addEventListener('change', () => { updateFilterBadge(); refreshAll(); });
+  document.getElementById('filter-country').addEventListener('change', () => { updateFilterBadge(); refreshAll(true); });
+
+  // Filter drawer toggle
+  document.getElementById('filter-toggle').addEventListener('click', () => {
+    const drawer = document.getElementById('filter-drawer');
+    const btn = document.getElementById('filter-toggle');
+    const isCollapsed = drawer.classList.toggle('collapsed');
+    btn.classList.toggle('active', !isCollapsed);
+    localStorage.setItem('filtersCollapsed', isCollapsed ? '1' : '');
+  });
+
+  // Restore filter drawer state
+  if (localStorage.getItem('filtersCollapsed') === '') {
+    document.getElementById('filter-drawer').classList.remove('collapsed');
+    document.getElementById('filter-toggle').classList.add('active');
+  }
+
+  // Clear all filters
+  document.getElementById('filter-clear').addEventListener('click', () => {
+    document.getElementById('filter-type').value = 'all';
+    document.getElementById('filter-country').value = 'all';
+    document.getElementById('filter-nude').value = 'all';
+    document.getElementById('filter-wishlist').value = 'all';
+    updateFilterBadge();
+    refreshAll();
+  });
 
   // Collapsible taste profile
   document.getElementById('taste-toggle').addEventListener('click', () => {
@@ -793,6 +892,14 @@ function setupListeners() {
     document.getElementById('taste-toggle').classList.add('collapsed');
     document.getElementById('taste-body').classList.add('collapsed');
   }
+
+  // Taste profile edit
+  document.getElementById('taste-edit-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    openTasteEdit();
+  });
+  document.getElementById('taste-edit-cancel').addEventListener('click', closeTasteEdit);
+  document.getElementById('taste-edit-save').addEventListener('click', saveTasteEdit);
 
   // Detail panel close
   document.getElementById('close-detail').addEventListener('click', closeDetail);

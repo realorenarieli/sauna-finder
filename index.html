@@ -28,7 +28,7 @@
 
     <div class="controls">
       <input type="text" id="search" placeholder="Search saunas..." />
-      <div class="control-row">
+      <div class="controls-top-row">
         <select id="sort-by">
           <option value="finnish">Finnish Affinity</option>
           <option value="foryou">For You</option>
@@ -36,37 +36,67 @@
           <option value="city">City</option>
           <option value="price">Price</option>
         </select>
-        <select id="filter-type">
-          <option value="all">All Types</option>
-          <option value="wood-fired">Wood-fired</option>
-          <option value="smoke">Smoke</option>
-          <option value="electric">Electric</option>
-          <option value="russian-banya">Russian Banya</option>
-          <option value="korean-jjimjilbang">Jjimjilbang</option>
-          <option value="boat">Boat</option>
-          <option value="other">Other</option>
-        </select>
-        <select id="filter-country">
-          <option value="all">All Countries</option>
-        </select>
-        <select id="filter-nude">
-          <option value="all">All</option>
-          <option value="nude">Dicks Out Only</option>
-          <option value="clothed">Clothed Only</option>
-        </select>
-        <select id="filter-wishlist">
-          <option value="all">All Saunas</option>
-          <option value="wishlist">Wishlist Only</option>
-        </select>
+        <button id="filter-toggle" class="filter-toggle-btn">
+          <span class="filter-icon">&#9776;</span> Filters <span id="filter-badge" class="filter-badge hidden">0</span>
+        </button>
+      </div>
+      <div id="filter-drawer" class="filter-drawer collapsed">
+        <div class="filter-drawer-grid">
+          <div class="filter-group">
+            <label class="filter-label">Type</label>
+            <select id="filter-type">
+              <option value="all">All Types</option>
+              <option value="wood-fired">Wood-fired</option>
+              <option value="smoke">Smoke</option>
+              <option value="electric">Electric</option>
+              <option value="russian-banya">Russian Banya</option>
+              <option value="korean-jjimjilbang">Jjimjilbang</option>
+              <option value="boat">Boat</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Country</label>
+            <select id="filter-country">
+              <option value="all">All Countries</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Dress Code</label>
+            <select id="filter-nude">
+              <option value="all">Any</option>
+              <option value="nude">Dicks Out Only</option>
+              <option value="clothed">Clothed Only</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Collection</label>
+            <select id="filter-wishlist">
+              <option value="all">All Saunas</option>
+              <option value="wishlist">Wishlist Only</option>
+            </select>
+          </div>
+        </div>
+        <button id="filter-clear" class="filter-clear-btn">Clear All Filters</button>
       </div>
     </div>
 
     <!-- Taste Profile (shown when enough ratings) -->
     <div id="taste-profile" class="taste-profile hidden">
-      <h3 class="collapsible-header" id="taste-toggle">Your Taste Profile <span class="chevron"></span></h3>
+      <div class="taste-header-row">
+        <h3 class="collapsible-header" id="taste-toggle">Your Taste Profile <span class="chevron"></span></h3>
+        <button id="taste-edit-btn" class="taste-edit-btn" title="Edit preferences">Edit</button>
+      </div>
       <div class="collapsible-body" id="taste-body">
         <div id="taste-bars"></div>
         <p class="taste-hint" id="taste-hint"></p>
+        <div id="taste-edit" class="taste-edit hidden">
+          <div id="taste-sliders"></div>
+          <div class="taste-edit-actions">
+            <button id="taste-edit-cancel" class="btn btn-secondary">Cancel</button>
+            <button id="taste-edit-save" class="btn btn-primary">Save</button>
+          </div>
+        </div>
       </div>
     </div>
 

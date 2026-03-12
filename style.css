@@ -138,12 +138,12 @@ a { color: var(--accent); }
 #search:focus { border-color: var(--warm); }
 #search::placeholder { color: var(--text-3); }
 
-.control-row {
+.controls-top-row {
   display: flex;
   gap: 6px;
 }
 
-.control-row select {
+.controls-top-row select {
   flex: 1;
   min-width: 0;
   padding: 6px 8px;
@@ -162,6 +162,126 @@ a { color: var(--accent); }
   background-position: right 8px center;
   padding-right: 22px;
 }
+
+/* ── Filter toggle button ────────────────────── */
+.filter-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  background: var(--card);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.filter-toggle-btn:hover { border-color: var(--warm); color: var(--accent); }
+
+.filter-toggle-btn.active {
+  background: var(--accent);
+  color: #f6f1ea;
+  border-color: var(--accent);
+}
+
+.filter-icon { font-size: 11px; }
+
+.filter-badge {
+  background: var(--warm);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.filter-toggle-btn.active .filter-badge {
+  background: rgba(255,255,255,0.3);
+  color: #fff;
+}
+
+/* ── Filter drawer (collapsible) ─────────────── */
+.filter-drawer {
+  overflow: hidden;
+  max-height: 300px;
+  opacity: 1;
+  transition: max-height 0.25s ease, opacity 0.2s ease, margin 0.25s ease;
+  margin-top: 0;
+}
+
+.filter-drawer.collapsed {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+}
+
+.filter-drawer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.filter-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-3);
+}
+
+.filter-drawer select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  background: var(--card);
+  color: var(--text-2);
+  cursor: pointer;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L4 4L7 1' stroke='%23a89880' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 22px;
+}
+
+.filter-clear-btn {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 5px;
+  border: none;
+  background: none;
+  color: var(--text-3);
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  transition: color 0.15s;
+}
+
+.filter-clear-btn:hover { color: var(--accent); }
 
 /* ── Taste Profile ───────────────────────────── */
 .taste-profile {
@@ -259,10 +379,78 @@ a { color: var(--accent); }
   text-align: right;
 }
 
+.taste-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.taste-edit-btn {
+  font-size: 11px;
+  color: var(--text-3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  transition: color 0.15s, background 0.15s;
+}
+
+.taste-edit-btn:hover { color: var(--accent); background: var(--hover); }
+
 .taste-hint {
   font-size: 11px;
   color: var(--text-3);
   margin-top: 6px;
+}
+
+.taste-edit {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.taste-edit label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.taste-edit .taste-slider-label {
+  width: 72px;
+  font-size: 11px;
+  text-align: right;
+  color: var(--text-2);
+  flex-shrink: 0;
+}
+
+.taste-edit input[type="range"] {
+  flex: 1;
+  accent-color: var(--warm);
+  height: 4px;
+}
+
+.taste-edit .taste-slider-value {
+  width: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  color: var(--text-2);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+.taste-edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.taste-edit-actions .btn {
+  flex: 1;
+  padding: 6px;
+  font-size: 12px;
 }
 
 /* ── "You Might Love" ─────────────────────────── */
