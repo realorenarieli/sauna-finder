@@ -175,16 +175,27 @@ function validateSaunaData(data) {
 // Stored as individual keys: sauna:<id> → JSON
 // Index key: sauna:_index → array of IDs (for fast listing)
 
-async function listCommunitySaunas(env) {
+let saunasCache = null;
+let saunasCacheTime = 0;
+const CACHE_TTL_MS = 60_000; // 1 minute
+
+async function listCommunitySaunas(env, bustCache = false) {
+  const now = Date.now();
+  if (!bustCache && saunasCache && (now - saunasCacheTime) < CACHE_TTL_MS) {
+    return saunasCache;
+  }
+
   const kv = env.COMMUNITY_SAUNAS;
   const indexStr = await kv.get('sauna:_index');
   const ids = indexStr ? JSON.parse(indexStr) : [];
 
-  const saunas = [];
-  for (const id of ids) {
-    const data = await kv.get(`sauna:${id}`, { type: 'json' });
-    if (data) saunas.push(data);
-  }
+  const results = await Promise.all(
+    ids.map(id => kv.get(`sauna:${id}`, { type: 'json' }))
+  );
+  const saunas = results.filter(Boolean);
+
+  saunasCache = saunas;
+  saunasCacheTime = now;
   return saunas;
 }
 
@@ -208,6 +219,7 @@ async function addCommunitySauna(saunaData, env) {
   ids.push(id);
   await kv.put('sauna:_index', JSON.stringify(ids));
 
+  saunasCache = null; // bust cache
   return sauna;
 }
 
@@ -220,6 +232,8 @@ async function deleteCommunitySauna(id, env) {
   const ids = indexStr ? JSON.parse(indexStr) : [];
   const updated = ids.filter(i => i !== id);
   await kv.put('sauna:_index', JSON.stringify(updated));
+
+  saunasCache = null; // bust cache
 }
 
 // ── Route: /saunas ──────────────────────────
