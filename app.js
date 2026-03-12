@@ -93,44 +93,48 @@ function saveProfile() {
   localStorage.setItem('saunaProfile', JSON.stringify(profile));
 }
 
-// ── User Saunas (localStorage) ──────────────
-function loadUserSaunas() {
-  try {
-    return JSON.parse(localStorage.getItem('userSaunas')) || [];
-  } catch {
-    return [];
-  }
-}
+// ── Community Saunas (Worker API) ───────────
+let communitySaunas = [];
 
-function saveUserSaunas(list) {
+async function fetchCommunitySaunas() {
   try {
-    localStorage.setItem('userSaunas', JSON.stringify(list));
+    const res = await fetch(WORKER_URL + '/saunas');
+    if (res.ok) {
+      communitySaunas = await res.json();
+    }
   } catch (e) {
-    console.error('Failed to save user saunas:', e);
+    console.error('Failed to fetch community saunas:', e);
   }
 }
 
-function addUserSauna(data) {
-  const id = 'user-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
-  const sauna = {
-    ...data,
-    id,
-    userAdded: true,
-    addedAt: new Date().toISOString(),
-  };
-  const list = loadUserSaunas();
-  list.push(sauna);
-  saveUserSaunas(list);
-  return id;
+async function addCommunitySauna(data) {
+  const res = await fetch(WORKER_URL + '/saunas', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to save sauna');
+  }
+  const sauna = await res.json();
+  communitySaunas.push(sauna);
+  return sauna;
 }
 
-function removeUserSauna(id) {
-  const list = loadUserSaunas().filter(s => s.id !== id);
-  saveUserSaunas(list);
+async function removeCommunitySauna(id) {
+  const res = await fetch(WORKER_URL + '/saunas?id=' + encodeURIComponent(id), {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to delete sauna');
+  }
+  communitySaunas = communitySaunas.filter(s => s.id !== id);
 }
 
 function mergeSaunas() {
-  saunas = [...dbSaunas, ...loadUserSaunas()];
+  saunas = [...dbSaunas, ...communitySaunas];
 }
 
 // ── Geocoding (Nominatim) ───────────────────
@@ -337,7 +341,7 @@ function renderMarkers() {
       color = isSelected ? '#fdf9f4' : '#6b5234';
     }
 
-    const borderStyle = sauna.userAdded ? 'dashed' : 'solid';
+    const borderStyle = sauna.communityAdded ? 'dashed' : 'solid';
     const icon = L.divIcon({
       className: 'custom-marker',
       html: `<div style="
@@ -387,7 +391,7 @@ function renderList() {
             <span class="tag">${TYPE_LABELS[sauna.type] || sauna.type}</span>
             <span class="tag">${sauna.price}</span>
             ${sauna.nude ? '<span class="tag tag-nude">DICKS OUT</span>' : ''}
-            ${sauna.userAdded ? '<span class="tag tag-user-added">Added by you</span>' : ''}
+            ${sauna.communityAdded ? '<span class="tag tag-user-added">Community</span>' : ''}
             ${isVisited ? `<span class="tag">${'★'.repeat(profile.ratings[sauna.id])} visited</span>` : ''}
           </div>
         </div>
@@ -510,7 +514,7 @@ function openDetail(id) {
       }
     </div>
     ${isVisited ? `<button class="link-btn" onclick="removeRating('${sauna.id}')">Remove visit</button>` : ''}
-    ${sauna.userAdded ? `<button class="link-btn link-btn-danger" onclick="deleteUserSauna('${sauna.id}')">Delete this sauna</button>` : ''}
+    ${sauna.communityAdded ? `<button class="link-btn link-btn-danger" onclick="deleteUserSauna('${sauna.id}')">Delete this sauna</button>` : ''}
   `;
 
   const panel = document.getElementById('detail-panel');
@@ -1016,23 +1020,36 @@ async function saveAddSauna() {
     lng: coords ? coords.lng : null,
   };
 
-  const id = addUserSauna(saunaData);
-  mergeSaunas();
-  repopulateCountryFilter();
-  closeAddSauna();
-  refreshAll();
+  saveBtn.textContent = 'Saving...';
+  saveBtn.disabled = true;
 
-  if (!coords) {
-    alert(`"${name}" was saved but couldn't be placed on the map — geocoding failed for "${address || city}". It will appear in the list but not on the map.`);
+  try {
+    await addCommunitySauna(saunaData);
+    mergeSaunas();
+    repopulateCountryFilter();
+    closeAddSauna();
+    refreshAll();
+
+    if (!coords) {
+      alert(`"${name}" was saved but couldn't be placed on the map — geocoding failed for "${address || city}". It will appear in the list but not on the map.`);
+    }
+  } catch (err) {
+    saveBtn.textContent = origText;
+    saveBtn.disabled = false;
+    alert('Failed to save: ' + err.message);
   }
 }
 
-function deleteUserSauna(id) {
-  removeUserSauna(id);
-  mergeSaunas();
-  repopulateCountryFilter();
-  closeDetail();
-  refreshAll();
+async function deleteUserSauna(id) {
+  try {
+    await removeCommunitySauna(id);
+    mergeSaunas();
+    repopulateCountryFilter();
+    closeDetail();
+    refreshAll();
+  } catch (err) {
+    alert('Failed to delete: ' + err.message);
+  }
 }
 
 // ── CSV Export / Import ─────────────────────
@@ -1069,78 +1086,75 @@ function downloadCSV() {
   URL.revokeObjectURL(a.href);
 }
 
-function uploadCSV(file) {
-  const reader = new FileReader();
-  reader.onload = e => {
+async function uploadCSV(file) {
+  const text = await file.text();
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) return;
+
+  const headers = parseCSVLine(lines[0]);
+  const nameIdx = headers.indexOf('name');
+  const cityIdx = headers.indexOf('city');
+  const countryIdx = headers.indexOf('country');
+
+  if (nameIdx === -1 || cityIdx === -1 || countryIdx === -1) {
+    alert('CSV must have name, city, and country columns.');
+    return;
+  }
+
+  let added = 0;
+  let failed = 0;
+  for (let i = 1; i < lines.length; i++) {
+    const cols = parseCSVLine(lines[i]);
+    if (!cols[nameIdx] || !cols[cityIdx] || !cols[countryIdx]) continue;
+
+    const get = h => cols[headers.indexOf(h)] || null;
+    const getNum = h => {
+      const v = parseInt(get(h));
+      return Number.isFinite(v) && v >= 0 && v <= 10 ? v : 5;
+    };
+
+    const existingName = cols[nameIdx].trim();
+    const existingCity = cols[cityIdx].trim();
+    if (saunas.some(s => s.name === existingName && s.city === existingCity)) continue;
+
+    const saunaData = {
+      name: existingName,
+      city: existingCity,
+      country: cols[countryIdx].trim(),
+      address: get('address') || `${existingCity}, ${cols[countryIdx].trim()}`,
+      type: get('type') || 'other',
+      hours: get('hours'),
+      price: get('price') || 'Unknown',
+      website: get('website'),
+      nude: get('nude') === 'true',
+      highlights: get('highlights'),
+      lat: parseFloat(get('lat')) || null,
+      lng: parseFloat(get('lng')) || null,
+      scores: {
+        heatSource: getNum('score_heatSource'),
+        loylyQuality: getNum('score_loylyQuality'),
+        communalAtmosphere: getNum('score_communalAtmosphere'),
+        waterAccess: getNum('score_waterAccess'),
+        noFrills: getNum('score_noFrills'),
+        tradition: getNum('score_tradition'),
+        overall: getNum('score_overall'),
+      },
+    };
+
     try {
-      const text = e.target.result;
-      const lines = text.split(/\r?\n/).filter(l => l.trim());
-      if (lines.length < 2) return;
-
-      const headers = parseCSVLine(lines[0]);
-      const nameIdx = headers.indexOf('name');
-      const cityIdx = headers.indexOf('city');
-      const countryIdx = headers.indexOf('country');
-
-      if (nameIdx === -1 || cityIdx === -1 || countryIdx === -1) {
-        alert('CSV must have name, city, and country columns.');
-        return;
-      }
-
-      let added = 0;
-      for (let i = 1; i < lines.length; i++) {
-        const cols = parseCSVLine(lines[i]);
-        if (!cols[nameIdx] || !cols[cityIdx] || !cols[countryIdx]) continue;
-
-        const get = h => cols[headers.indexOf(h)] || null;
-        const getNum = h => {
-          const v = parseInt(get(h));
-          return Number.isFinite(v) && v >= 0 && v <= 10 ? v : 5;
-        };
-
-        // Skip if duplicate name + city
-        const existingName = cols[nameIdx].trim();
-        const existingCity = cols[cityIdx].trim();
-        if (saunas.some(s => s.name === existingName && s.city === existingCity)) continue;
-
-        const saunaData = {
-          name: existingName,
-          city: existingCity,
-          country: cols[countryIdx].trim(),
-          address: get('address') || `${existingCity}, ${cols[countryIdx].trim()}`,
-          type: get('type') || 'other',
-          hours: get('hours'),
-          price: get('price') || 'Unknown',
-          website: get('website'),
-          nude: get('nude') === 'true',
-          highlights: get('highlights'),
-          lat: parseFloat(get('lat')) || null,
-          lng: parseFloat(get('lng')) || null,
-          scores: {
-            heatSource: getNum('score_heatSource'),
-            loylyQuality: getNum('score_loylyQuality'),
-            communalAtmosphere: getNum('score_communalAtmosphere'),
-            waterAccess: getNum('score_waterAccess'),
-            noFrills: getNum('score_noFrills'),
-            tradition: getNum('score_tradition'),
-            overall: getNum('score_overall'),
-          },
-        };
-
-        addUserSauna(saunaData);
-        added++;
-      }
-
-      mergeSaunas();
-      repopulateCountryFilter();
-      refreshAll();
-      alert(`Imported ${added} sauna${added !== 1 ? 's' : ''}.`);
-    } catch (err) {
-      console.error('CSV import error:', err);
-      alert('Failed to parse CSV file.');
+      await addCommunitySauna(saunaData);
+      added++;
+    } catch {
+      failed++;
     }
-  };
-  reader.readAsText(file);
+  }
+
+  mergeSaunas();
+  repopulateCountryFilter();
+  refreshAll();
+  let msg = `Imported ${added} sauna${added !== 1 ? 's' : ''}.`;
+  if (failed > 0) msg += ` ${failed} failed to save.`;
+  alert(msg);
 }
 
 function parseCSVLine(line) {
@@ -1200,6 +1214,9 @@ async function init() {
       '<p style="padding:20px;color:var(--score-bottom)">Failed to load sauna data. Make sure you\'re running a local server.</p>';
     return;
   }
+
+  // Fetch community-added saunas from worker (non-blocking on failure)
+  await fetchCommunitySaunas();
 
   mergeSaunas();
   ensureProfileFields();

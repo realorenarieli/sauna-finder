@@ -6,5 +6,9 @@ compatibility_date = "2024-01-01"
 binding = "RATE_LIMITS"
 id = "3e20eea0aed6454fa4e6d9c15d5929a5"
 
+[[kv_namespaces]]
+binding = "COMMUNITY_SAUNAS"
+id = "7a9a6299f79a4c28838ff18d6c7b94a8"
+
 # Set the API key with:
 #   npx wrangler secret put ANTHROPIC_API_KEY
