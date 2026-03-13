@@ -1854,11 +1854,6 @@ a { color: var(--accent); }
 .closed-banner-text strong { color: #6b3e1a; }
 
 .disclaimer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 2500;
   padding: 8px 20px;
   font-size: 11px;
   line-height: 1.4;
@@ -2110,11 +2105,13 @@ a { color: var(--accent); }
   /* Modal full-width on mobile */
   .modal-content { width: 95%; max-height: 90vh; padding: 20px; }
 
-  /* Disclaimer above tab bar */
-  .disclaimer { padding-bottom: 64px; }
+  /* Disclaimer: extra bottom padding for tab bar */
+  .disclaimer {
+    padding-bottom: 72px;
+  }
 
-  /* Sauna list fills available space */
+  /* Sauna list: room for tab bar */
   .sauna-list {
-    padding-bottom: 64px;
+    padding-bottom: 16px;
   }
 }
