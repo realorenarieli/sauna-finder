@@ -440,19 +440,26 @@ function initMap() {
     },
   }).addTo(map);
 
-  // "Near me" geolocation control
-  const LocateControl = L.Control.extend({
+  // "Near me" + "Show all" combined control
+  const NavControl = L.Control.extend({
     options: { position: 'topright' },
     onAdd() {
-      const btn = L.DomUtil.create('div', 'leaflet-bar locate-btn');
-      btn.innerHTML = '<button title="Near me" class="locate-button">&#9737;</button>';
-      btn.style.cursor = 'pointer';
-      L.DomEvent.disableClickPropagation(btn);
-      btn.querySelector('button').addEventListener('click', locateUser);
-      return btn;
+      const container = L.DomUtil.create('div', 'leaflet-bar map-nav-group');
+      container.innerHTML = `
+        <button title="Near me" class="locate-button">&#9737;</button>
+        <button title="Show all saunas" class="locate-button" style="font-size:16px">&#8862;</button>
+      `;
+      L.DomEvent.disableClickPropagation(container);
+      const [nearMe, showAll] = container.querySelectorAll('button');
+      nearMe.addEventListener('click', locateUser);
+      showAll.addEventListener('click', () => {
+        if (selectedId) closeDetail();
+        fitMapToSaunas();
+      });
+      return container;
     },
   });
-  new LocateControl().addTo(map);
+  new NavControl().addTo(map);
 
   // Marker mode toggle control
   const MarkerToggle = L.Control.extend({
@@ -477,23 +484,6 @@ function initMap() {
     },
   });
   new MarkerToggle().addTo(map);
-
-  // "Show all" / fit bounds control
-  const ShowAllControl = L.Control.extend({
-    options: { position: 'topright' },
-    onAdd() {
-      const btn = L.DomUtil.create('div', 'leaflet-bar locate-btn');
-      btn.innerHTML = '<button title="Show all saunas" class="locate-button" style="font-size:16px">⊞</button>';
-      btn.style.cursor = 'pointer';
-      L.DomEvent.disableClickPropagation(btn);
-      btn.querySelector('button').addEventListener('click', () => {
-        if (selectedId) closeDetail();
-        fitMapToSaunas();
-      });
-      return btn;
-    },
-  });
-  new ShowAllControl().addTo(map);
 
   // "Search this area" control
   const AreaSearch = L.Control.extend({
@@ -1904,5 +1894,13 @@ window.copyShareLink = copyShareLink;
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
+
+// ── Offline Detection ───────────────────────
+function updateOfflineBanner() {
+  document.getElementById('offline-banner').classList.toggle('hidden', navigator.onLine);
+}
+window.addEventListener('online', updateOfflineBanner);
+window.addEventListener('offline', updateOfflineBanner);
+if (!navigator.onLine) updateOfflineBanner();
 
 init();

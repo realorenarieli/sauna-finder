@@ -1114,6 +1114,17 @@ a { color: var(--accent); }
   color: #f6f1ea;
 }
 
+/* ── Map nav group (Near Me + Show All) ──────── */
+.map-nav-group {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 4px;
+}
+.map-nav-group .locate-button:not(:last-child) {
+  border-bottom: 1px solid var(--border);
+}
+
 /* ── Locate / Near Me button ──────────────────── */
 .locate-button {
   width: 34px;
@@ -1557,6 +1568,27 @@ a { color: var(--accent); }
 .search-area-btn:hover {
   background: var(--hover);
   border-color: var(--warm);
+}
+
+/* ── Offline Banner ──────────────────────────── */
+.offline-banner {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  background: rgba(59, 47, 32, 0.88);
+  color: #f6f1ea;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  box-shadow: 0 2px 12px rgba(59, 47, 32, 0.25);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  text-align: center;
+  max-width: 90vw;
 }
 
 /* ── Utilities ───────────────────────────────── */
