@@ -693,8 +693,8 @@ function openDetail(id) {
     mapViewBeforeDetail = { center: map.getCenter(), zoom: map.getZoom() };
   }
 
-  // Update URL hash for deep linking (pushState so back button works)
-  history.pushState({ sauna: id }, '', `#sauna/${id}`);
+  // Update URL hash for deep linking
+  history.replaceState(null, '', `#sauna/${id}`);
 
   const fs = finnishScore(sauna);
   const fy = forYouScore(sauna);
@@ -860,14 +860,12 @@ function openDetail(id) {
   renderList();
 }
 
-function closeDetail(skipHistory) {
+function closeDetail() {
   const panel = document.getElementById('detail-panel');
   panel.classList.remove('visible');
   setTimeout(() => panel.classList.add('hidden'), 200);
   selectedId = null;
-  if (!skipHistory) {
-    history.replaceState(null, '', window.location.pathname);
-  }
+  history.replaceState(null, '', window.location.pathname);
   // Restore previous map view
   if (mapViewBeforeDetail) {
     map.flyTo(mapViewBeforeDetail.center, mapViewBeforeDetail.zoom, { duration: 0.6 });
@@ -1724,19 +1722,6 @@ function handleHashRoute() {
   }
 }
 
-// Handle browser back/forward button
-window.addEventListener('popstate', () => {
-  const hash = window.location.hash;
-  const match = hash.match(/^#sauna\/(.+)$/);
-  if (match) {
-    const id = decodeURIComponent(match[1]);
-    if (saunas.find(s => s.id === id)) {
-      openDetail(id);
-    }
-  } else if (selectedId) {
-    closeDetail(true); // skipHistory — popstate already changed the URL
-  }
-});
 
 function copyShareLink(id) {
   const url = `${window.location.origin}${window.location.pathname}#sauna/${id}`;
