@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sauna Finder</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -32,6 +34,7 @@
         <select id="sort-by">
           <option value="finnish">Finnish Affinity</option>
           <option value="foryou">For You</option>
+          <option value="nearest">Nearest</option>
           <option value="name">Name A-Z</option>
           <option value="city">City</option>
           <option value="price">Price</option>
@@ -365,6 +368,7 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

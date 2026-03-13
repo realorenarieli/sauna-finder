@@ -90,6 +90,7 @@ let ratingTarget = null;
 let ratingValue = 0;
 let map, markerLayer;
 let markerMode = 'type'; // 'score' or 'type' or 'nude'
+let userLocation = null; // { lat, lng } from geolocation
 
 // ── Profile (localStorage) ───────────────────
 function loadProfile() {
@@ -310,7 +311,42 @@ function initMap() {
     maxZoom: 19,
     subdomains: 'abcd',
   }).addTo(map);
-  markerLayer = L.layerGroup().addTo(map);
+  markerLayer = L.markerClusterGroup({
+    maxClusterRadius: 40,
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true,
+    iconCreateFunction(cluster) {
+      const count = cluster.getChildCount();
+      const size = count > 20 ? 40 : count > 5 ? 34 : 28;
+      return L.divIcon({
+        html: `<div style="
+          width:${size}px;height:${size}px;border-radius:50%;
+          background:var(--accent,#6b5234);color:#fdf9f4;
+          display:flex;align-items:center;justify-content:center;
+          font-size:12px;font-weight:700;
+          box-shadow:0 2px 6px rgba(59,47,32,0.3);
+          font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+        ">${count}</div>`,
+        className: 'sauna-cluster',
+        iconSize: [size, size],
+      });
+    },
+  }).addTo(map);
+
+  // "Near me" geolocation control
+  const LocateControl = L.Control.extend({
+    options: { position: 'topright' },
+    onAdd() {
+      const btn = L.DomUtil.create('div', 'leaflet-bar locate-btn');
+      btn.innerHTML = '<button title="Near me" class="locate-button">&#9737;</button>';
+      btn.style.cursor = 'pointer';
+      L.DomEvent.disableClickPropagation(btn);
+      btn.querySelector('button').addEventListener('click', locateUser);
+      return btn;
+    },
+  });
+  new LocateControl().addTo(map);
 
   // Marker mode toggle control
   const MarkerToggle = L.Control.extend({
@@ -335,6 +371,59 @@ function initMap() {
     },
   });
   new MarkerToggle().addTo(map);
+}
+
+// ── Geolocation ─────────────────────────────
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function distanceToUser(sauna) {
+  if (!userLocation || sauna.lat == null || sauna.lng == null) return Infinity;
+  return haversineKm(userLocation.lat, userLocation.lng, sauna.lat, sauna.lng);
+}
+
+function formatDistance(km) {
+  if (km === Infinity) return '';
+  if (km < 1) return `${Math.round(km * 1000)} m`;
+  if (km < 100) return `${km.toFixed(1)} km`;
+  return `${Math.round(km)} km`;
+}
+
+let userLocationMarker = null;
+
+function locateUser() {
+  if (!navigator.geolocation) {
+    alert('Geolocation is not supported by your browser.');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+
+      // Add/update user location marker
+      if (userLocationMarker) map.removeLayer(userLocationMarker);
+      userLocationMarker = L.circleMarker([userLocation.lat, userLocation.lng], {
+        radius: 8, color: '#3a6b8b', fillColor: '#5ba3d9', fillOpacity: 0.9, weight: 2,
+      }).addTo(map).bindTooltip('You are here', { className: 'sauna-tooltip' });
+
+      // Switch to nearest sort
+      document.getElementById('sort-by').value = 'nearest';
+      map.flyTo([userLocation.lat, userLocation.lng], 8, { duration: 1 });
+      refreshAll();
+    },
+    err => {
+      alert('Could not get your location. Make sure location access is allowed.');
+      console.warn('Geolocation error:', err);
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
 }
 
 function renderMarkers() {
@@ -411,7 +500,7 @@ function renderList() {
       <div class="sauna-card ${selectedId === sauna.id ? 'active' : ''}" data-id="${sauna.id}">
         <div class="sauna-card-info">
           <div class="sauna-card-name">${isWishlisted ? '<span class="wishlist-indicator" title="On your wishlist">&#9829;</span> ' : ''}${sauna.name}</div>
-          <div class="sauna-card-location">${sauna.city}, ${sauna.country}</div>
+          <div class="sauna-card-location">${sauna.city}, ${sauna.country}${userLocation && sauna.lat != null ? ` &middot; ${formatDistance(distanceToUser(sauna))}` : ''}</div>
           <div class="sauna-card-meta">
             <span class="tag">${TYPE_LABELS[sauna.type] || sauna.type}</span>
             <span class="tag">${sauna.price}</span>
@@ -441,6 +530,9 @@ function openDetail(id) {
   const sauna = saunas.find(s => s.id === id);
   if (!sauna) return;
   selectedId = id;
+
+  // Update URL hash for deep linking
+  history.replaceState(null, '', `#sauna/${id}`);
 
   const fs = finnishScore(sauna);
   const fy = forYouScore(sauna);
@@ -555,6 +647,9 @@ function openDetail(id) {
     </div>
 
     <div class="detail-actions">
+      <button class="btn btn-share" onclick="copyShareLink('${sauna.id}')">
+        &#128279; Copy Link
+      </button>
       <button class="btn btn-wishlist ${isWishlisted ? 'wishlisted' : ''}" onclick="toggleWishlist('${sauna.id}')">
         ${isWishlisted ? '&#9829; On Wishlist' : '&#9825; Add to Wishlist'}
       </button>
@@ -594,6 +689,7 @@ function closeDetail() {
   panel.classList.remove('visible');
   setTimeout(() => panel.classList.add('hidden'), 200);
   selectedId = null;
+  history.replaceState(null, '', window.location.pathname);
   renderMarkers();
   renderList();
 }
@@ -838,6 +934,7 @@ function applySorting() {
     switch (sort) {
       case 'finnish': return finnishScore(b) - finnishScore(a);
       case 'foryou': return calcScore(b, weights) - calcScore(a, weights);
+      case 'nearest': return distanceToUser(a) - distanceToUser(b);
       case 'name': return a.name.localeCompare(b.name);
       case 'city': return a.city.localeCompare(b.city);
       case 'price': return parsePriceApprox(a.price) - parsePriceApprox(b.price);
@@ -1408,10 +1505,42 @@ async function init() {
   setupListeners();
   refreshAll();
 
+  // Open sauna from URL hash (deep link)
+  handleHashRoute();
+
   // Show onboarding on first visit
   if (!profile.onboardingDone) {
     showOnboarding();
   }
+}
+
+function handleHashRoute() {
+  const hash = window.location.hash;
+  const match = hash.match(/^#sauna\/(.+)$/);
+  if (match) {
+    const id = decodeURIComponent(match[1]);
+    if (saunas.find(s => s.id === id)) {
+      openDetail(id);
+    }
+  }
+}
+
+window.addEventListener('hashchange', handleHashRoute);
+
+function copyShareLink(id) {
+  const url = `${window.location.origin}${window.location.pathname}#sauna/${id}`;
+  navigator.clipboard.writeText(url).then(() => {
+    // Brief feedback
+    const btn = document.querySelector('.btn-share');
+    if (btn) {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '&#10003; Copied!';
+      setTimeout(() => { btn.innerHTML = orig; }, 1500);
+    }
+  }).catch(() => {
+    // Fallback for older browsers
+    prompt('Copy this link:', url);
+  });
 }
 
 // Make functions available globally for onclick handlers
@@ -1419,5 +1548,6 @@ window.openRating = openRating;
 window.removeRating = removeRating;
 window.toggleWishlist = toggleWishlist;
 window.deleteUserSauna = deleteUserSauna;
+window.copyShareLink = copyShareLink;
 
 init();

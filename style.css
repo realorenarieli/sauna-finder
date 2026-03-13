@@ -1000,6 +1000,12 @@ a { color: var(--accent); }
 .link-btn-danger { color: #8b3a3a; }
 .link-btn-danger:hover { color: #c45050; }
 
+/* ── Share link ──────────────────────────────── */
+.btn-share {
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
 /* ── Wishlist ──────────────────────────────── */
 .btn-wishlist {
   margin-bottom: 8px;
@@ -1066,6 +1072,37 @@ a { color: var(--accent); }
 .marker-toggle-btn.active {
   background: var(--accent);
   color: #f6f1ea;
+}
+
+/* ── Locate / Near Me button ──────────────────── */
+.locate-button {
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: var(--card);
+  color: var(--accent);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1;
+}
+
+.locate-button:hover {
+  background: var(--hover);
+  color: var(--warm);
+}
+
+/* ── Marker clusters ─────────────────────────── */
+.sauna-cluster { background: none !important; }
+.marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+  background: none !important;
+}
+.marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
+  background: none !important;
 }
 
 /* ── Map tooltip ──────────────────────────────── */
