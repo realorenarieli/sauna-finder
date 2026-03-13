@@ -1267,6 +1267,12 @@ function setupListeners() {
   // Detail panel close
   document.getElementById('close-detail').addEventListener('click', closeDetail);
 
+  // Swipe-down to dismiss detail panel (mobile)
+  setupSwipeToDismiss();
+
+  // Pull-to-refresh on sauna list
+  setupPullToRefresh();
+
   // Rating modal
   document.querySelectorAll('#star-rating .star').forEach(star => {
     star.addEventListener('click', () => {
@@ -1889,6 +1895,90 @@ window.removeRating = removeRating;
 window.toggleWishlist = toggleWishlist;
 window.deleteUserSauna = deleteUserSauna;
 window.copyShareLink = copyShareLink;
+
+// ── Swipe-to-Dismiss (mobile detail panel) ──
+function setupSwipeToDismiss() {
+  const panel = document.getElementById('detail-panel');
+  let startY = 0;
+  let currentY = 0;
+  let dragging = false;
+
+  panel.addEventListener('touchstart', e => {
+    // Only start drag if panel is scrolled to top
+    if (panel.scrollTop > 0) return;
+    startY = e.touches[0].clientY;
+    currentY = startY;
+    dragging = true;
+    panel.style.transition = 'none';
+  }, { passive: true });
+
+  panel.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    currentY = e.touches[0].clientY;
+    const dy = currentY - startY;
+    if (dy > 0) {
+      panel.style.transform = `translateY(${dy}px)`;
+      panel.style.opacity = Math.max(0.3, 1 - dy / 400);
+    }
+  }, { passive: true });
+
+  panel.addEventListener('touchend', () => {
+    if (!dragging) return;
+    dragging = false;
+    panel.style.transition = '';
+    const dy = currentY - startY;
+    if (dy > 120) {
+      closeDetail();
+    } else {
+      panel.style.transform = '';
+      panel.style.opacity = '';
+    }
+  });
+}
+
+// ── Pull-to-Refresh (sauna list) ────────────
+function setupPullToRefresh() {
+  const list = document.getElementById('sauna-list');
+  const indicator = document.getElementById('pull-refresh-indicator');
+  let startY = 0;
+  let pulling = false;
+
+  list.addEventListener('touchstart', e => {
+    if (list.scrollTop > 0) return;
+    startY = e.touches[0].clientY;
+    pulling = true;
+  }, { passive: true });
+
+  list.addEventListener('touchmove', e => {
+    if (!pulling) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy > 0 && list.scrollTop === 0) {
+      const progress = Math.min(dy / 80, 1);
+      indicator.style.height = Math.min(dy * 0.5, 40) + 'px';
+      indicator.style.opacity = progress;
+      indicator.querySelector('span').textContent = dy > 80 ? 'Release to refresh' : 'Pull to refresh';
+    }
+  }, { passive: true });
+
+  list.addEventListener('touchend', async () => {
+    if (!pulling) return;
+    pulling = false;
+    const h = parseFloat(indicator.style.height) || 0;
+    if (h >= 40) {
+      indicator.querySelector('span').textContent = 'Refreshing...';
+      indicator.style.height = '32px';
+      try {
+        await fetchSaunas();
+        populateCountryFilter();
+        refreshAll();
+      } catch (e) { /* offline — keep cached data */ }
+    }
+    setTimeout(() => {
+      indicator.style.height = '0';
+      indicator.style.opacity = '0';
+    }, 300);
+  });
+}
 
 // ── PWA Service Worker ──────────────────────
 if ('serviceWorker' in navigator) {
