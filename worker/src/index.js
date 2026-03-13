@@ -294,6 +294,202 @@ async function handleSaunas(request, env, origin) {
   });
 }
 
+// ── Suggested Edits (KV) ────────────────────
+// Stored as edit:<id> → JSON, index: edit:_index → array of IDs
+
+async function submitEdit(editData, ip, env) {
+  const kv = env.COMMUNITY_SAUNAS;
+  const id = 'edit-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+
+  const edit = {
+    id,
+    saunaId: editData.saunaId,
+    saunaName: editData.saunaName,
+    changes: editData.changes,
+    contributorId: editData.contributorId || 'anonymous',
+    contributorIp: ip,
+    submittedAt: new Date().toISOString(),
+    status: 'pending',
+  };
+
+  await kv.put(`edit:${id}`, JSON.stringify(edit));
+
+  const indexStr = await kv.get('edit:_index');
+  const ids = indexStr ? JSON.parse(indexStr) : [];
+  ids.push(id);
+  await kv.put('edit:_index', JSON.stringify(ids));
+
+  return edit;
+}
+
+async function listEdits(env) {
+  const kv = env.COMMUNITY_SAUNAS;
+  const indexStr = await kv.get('edit:_index');
+  const ids = indexStr ? JSON.parse(indexStr) : [];
+
+  const results = await Promise.all(
+    ids.map(id => kv.get(`edit:${id}`, { type: 'json' }))
+  );
+  return results.filter(Boolean).filter(e => e.status === 'pending');
+}
+
+async function approveEdit(editId, env) {
+  const kv = env.COMMUNITY_SAUNAS;
+  const editStr = await kv.get(`edit:${editId}`);
+  if (!editStr) return { error: 'Edit not found' };
+
+  const edit = JSON.parse(editStr);
+  if (edit.status !== 'pending') return { error: 'Edit already processed' };
+
+  // Load the sauna
+  const saunaStr = await kv.get(`sauna:${edit.saunaId}`);
+  if (!saunaStr) return { error: 'Sauna not found' };
+
+  const sauna = JSON.parse(saunaStr);
+
+  // Apply changes (only factual fields)
+  const ALLOWED_FIELDS = [
+    'name', 'city', 'country', 'address', 'type', 'hours', 'price',
+    'website', 'highlights', 'nude', 'aufguss', 'gender',
+  ];
+  const ALLOWED_GEAR = ['towel', 'swimwear', 'lockers', 'shower'];
+
+  for (const [key, value] of Object.entries(edit.changes)) {
+    if (key === 'gear' && typeof value === 'object') {
+      if (!sauna.gear) sauna.gear = {};
+      for (const [gk, gv] of Object.entries(value)) {
+        if (ALLOWED_GEAR.includes(gk)) sauna.gear[gk] = gv;
+      }
+    } else if (ALLOWED_FIELDS.includes(key)) {
+      sauna[key] = value;
+    }
+  }
+
+  // Save updated sauna
+  await kv.put(`sauna:${edit.saunaId}`, JSON.stringify(sauna));
+
+  // Mark edit as approved
+  edit.status = 'approved';
+  edit.approvedAt = new Date().toISOString();
+  await kv.put(`edit:${editId}`, JSON.stringify(edit));
+
+  saunasCache = null; // bust cache
+  return { ok: true, sauna };
+}
+
+async function rejectEdit(editId, env) {
+  const kv = env.COMMUNITY_SAUNAS;
+  const editStr = await kv.get(`edit:${editId}`);
+  if (!editStr) return { error: 'Edit not found' };
+
+  const edit = JSON.parse(editStr);
+  edit.status = 'rejected';
+  edit.rejectedAt = new Date().toISOString();
+  await kv.put(`edit:${editId}`, JSON.stringify(edit));
+
+  return { ok: true };
+}
+
+// ── Route: /edits ───────────────────────────
+async function handleEdits(request, env, origin) {
+  const url = new URL(request.url);
+
+  // Admin: list pending edits
+  if (request.method === 'GET') {
+    const adminKey = url.searchParams.get('key');
+    if (adminKey !== env.ADMIN_KEY) {
+      return Response.json({ error: 'Unauthorized' }, {
+        status: 401,
+        headers: corsHeaders(origin),
+      });
+    }
+    const edits = await listEdits(env);
+    return Response.json(edits, { headers: corsHeaders(origin) });
+  }
+
+  // Submit a suggested edit
+  if (request.method === 'POST') {
+    const action = url.searchParams.get('action');
+
+    // Admin: approve
+    if (action === 'approve') {
+      const body = await request.json();
+      if (body.key !== env.ADMIN_KEY) {
+        return Response.json({ error: 'Unauthorized' }, {
+          status: 401,
+          headers: corsHeaders(origin),
+        });
+      }
+      const result = await approveEdit(body.editId, env);
+      if (result.error) {
+        return Response.json(result, { status: 400, headers: corsHeaders(origin) });
+      }
+      return Response.json(result, { headers: corsHeaders(origin) });
+    }
+
+    // Admin: reject
+    if (action === 'reject') {
+      const body = await request.json();
+      if (body.key !== env.ADMIN_KEY) {
+        return Response.json({ error: 'Unauthorized' }, {
+          status: 401,
+          headers: corsHeaders(origin),
+        });
+      }
+      const result = await rejectEdit(body.editId, env);
+      if (result.error) {
+        return Response.json(result, { status: 400, headers: corsHeaders(origin) });
+      }
+      return Response.json(result, { headers: corsHeaders(origin) });
+    }
+
+    // Regular user: submit edit
+    const body = await request.json();
+
+    // Validate keyword
+    if (!body.keyword || body.keyword !== env.EDIT_KEYWORD) {
+      return Response.json({ error: 'Invalid keyword' }, {
+        status: 403,
+        headers: corsHeaders(origin),
+      });
+    }
+
+    if (!body.saunaId || !body.changes || typeof body.changes !== 'object') {
+      return Response.json({ error: 'saunaId and changes are required' }, {
+        status: 400,
+        headers: corsHeaders(origin),
+      });
+    }
+
+    // Rate limit: 10 edits per IP per hour
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    const rlKv = env.RATE_LIMITS;
+    if (rlKv) {
+      const now = Math.floor(Date.now() / 3600000);
+      const key = `edit:${ip}:${now}`;
+      const count = parseInt(await rlKv.get(key) || '0', 10);
+      if (count >= 10) {
+        return Response.json({ error: 'Too many edits. Try again later.' }, {
+          status: 429,
+          headers: corsHeaders(origin),
+        });
+      }
+      await rlKv.put(key, String(count + 1), { expirationTtl: 3600 });
+    }
+
+    const edit = await submitEdit(body, ip, env);
+    return Response.json({ ok: true, editId: edit.id }, {
+      status: 201,
+      headers: corsHeaders(origin),
+    });
+  }
+
+  return Response.json({ error: 'Method not allowed' }, {
+    status: 405,
+    headers: corsHeaders(origin),
+  });
+}
+
 // ── Route: /extract ─────────────────────────
 async function handleExtract(request, env, origin) {
   if (request.method !== 'POST') {
@@ -456,6 +652,10 @@ export default {
 
     if (url.pathname === '/saunas') {
       return handleSaunas(request, env, origin);
+    }
+
+    if (url.pathname === '/edits') {
+      return handleEdits(request, env, origin);
     }
 
     if (url.pathname === '/extract') {

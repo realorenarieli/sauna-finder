@@ -1446,6 +1446,32 @@ a { color: var(--accent); }
   letter-spacing: 0.3px;
 }
 
+/* ── Edit Modal ──────────────────────────────── */
+.edit-keyword-section {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.edit-keyword-hint {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-bottom: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+.edit-status {
+  font-size: 12px;
+  margin-top: 8px;
+  color: var(--text-3);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  min-height: 18px;
+}
+
+.edit-status.error { color: #8b3a3a; }
+.edit-status.success { color: #3a6b3a; }
+.edit-status.loading { color: var(--warm); }
+
 .disclaimer {
   position: fixed;
   bottom: 0;

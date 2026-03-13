@@ -379,6 +379,133 @@
     </div>
   </div>
 
+  <!-- Suggest Edit Modal -->
+  <div id="edit-modal" class="modal hidden">
+    <div class="modal-content add-sauna">
+      <h2>Suggest an Edit</h2>
+      <p id="edit-sauna-label">Editing: —</p>
+
+      <div class="add-sauna-form">
+        <div class="form-row">
+          <label>Name</label>
+          <input type="text" id="edit-name" />
+        </div>
+        <div class="form-row">
+          <label>City</label>
+          <input type="text" id="edit-city" />
+        </div>
+        <div class="form-row">
+          <label>Country</label>
+          <input type="text" id="edit-country" />
+        </div>
+        <div class="form-row">
+          <label>Address</label>
+          <input type="text" id="edit-address" />
+        </div>
+        <div class="form-row">
+          <label>Type</label>
+          <select id="edit-type">
+            <option value="wood-fired">Wood-fired</option>
+            <option value="smoke">Smoke</option>
+            <option value="electric">Electric</option>
+            <option value="russian-banya">Russian Banya</option>
+            <option value="korean-jjimjilbang">Jjimjilbang</option>
+            <option value="japanese-sento">Sento</option>
+            <option value="boat">Boat Sauna</option>
+            <option value="tent">Tent Sauna</option>
+            <option value="infrared">Infrared</option>
+            <option value="steam">Steam</option>
+            <option value="traditional-finnish">Traditional Finnish</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Hours</label>
+          <input type="text" id="edit-hours" placeholder="e.g. Mon-Fri 14-21" />
+        </div>
+        <div class="form-row">
+          <label>Price</label>
+          <input type="text" id="edit-price" placeholder="e.g. 15 EUR" />
+        </div>
+        <div class="form-row">
+          <label>Website</label>
+          <input type="url" id="edit-website" />
+        </div>
+        <div class="form-row">
+          <label>Nude</label>
+          <input type="checkbox" id="edit-nude" />
+        </div>
+        <div class="form-row">
+          <label>Aufguss</label>
+          <input type="checkbox" id="edit-aufguss" />
+        </div>
+        <div class="form-row">
+          <label>Gender</label>
+          <select id="edit-gender">
+            <option value="mixed">Mixed</option>
+            <option value="segregated">Segregated</option>
+            <option value="women-only">Women Only</option>
+            <option value="men-only">Men Only</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Highlights</label>
+          <textarea id="edit-highlights" rows="2"></textarea>
+        </div>
+
+        <h3 class="add-scores-title">What to Bring</h3>
+        <div class="form-row">
+          <label>Towel</label>
+          <select id="edit-gear-towel">
+            <option value="bring">Bring your own</option>
+            <option value="rental">Rental available</option>
+            <option value="provided">Provided</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Swimwear</label>
+          <select id="edit-gear-swimwear">
+            <option value="required">Required</option>
+            <option value="optional">Optional</option>
+            <option value="nude">Nude only</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Lockers</label>
+          <select id="edit-gear-lockers">
+            <option value="free">Free lockers</option>
+            <option value="coin">Coin lockers</option>
+            <option value="bring-lock">Bring a lock</option>
+            <option value="none">No lockers</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Shower</label>
+          <select id="edit-gear-shower">
+            <option value="basic">Showers (bring soap)</option>
+            <option value="full">Showers + toiletries</option>
+            <option value="none">No showers</option>
+          </select>
+        </div>
+
+        <div class="edit-keyword-section">
+          <div class="form-row">
+            <label>Keyword *</label>
+            <input type="text" id="edit-keyword" placeholder="Enter the shared keyword" />
+          </div>
+          <p class="edit-keyword-hint">A keyword is required to submit edits. Ask the community for it.</p>
+        </div>
+      </div>
+
+      <p class="extract-status" id="edit-status"></p>
+
+      <div class="modal-actions">
+        <button id="edit-cancel" class="btn btn-secondary">Cancel</button>
+        <button id="edit-submit" class="btn btn-primary">Submit Edit</button>
+      </div>
+    </div>
+  </div>
+
   <div class="disclaimer">
     This is a passion project. Info may be outdated or inaccurate — always verify hours, prices, and rules before you go. You're responsible for your own sauna adventures.
     In the spirit of <a href="https://www.sompasauna.fi" target="_blank" rel="noopener">Sompasauna</a>: <strong>don't be stubid.</strong>

@@ -118,6 +118,15 @@ function saveProfile() {
   localStorage.setItem('saunaProfile', JSON.stringify(profile));
 }
 
+function getContributorId() {
+  let id = localStorage.getItem('saunaContributorId');
+  if (!id) {
+    id = 'c-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+    localStorage.setItem('saunaContributorId', id);
+  }
+  return id;
+}
+
 // ── Saunas API (Worker KV) ──────────────────
 
 async function fetchSaunas() {
@@ -812,6 +821,9 @@ function openDetail(id) {
       <button class="btn btn-share" onclick="copyShareLink('${sauna.id}')">
         &#128279; Copy Link
       </button>
+      <button class="btn" onclick="openSuggestEdit('${sauna.id}')">
+        &#9998; Suggest Edit
+      </button>
       <button class="btn btn-wishlist ${isWishlisted ? 'wishlisted' : ''}" onclick="toggleWishlist('${sauna.id}')">
         ${isWishlisted ? '&#9829; On Wishlist' : '&#9825; Add to Wishlist'}
       </button>
@@ -1305,6 +1317,10 @@ function setupListeners() {
   document.getElementById('add-sauna-save').addEventListener('click', saveAddSauna);
   document.getElementById('extract-btn').addEventListener('click', extractFromUrl);
 
+  // Suggest Edit modal
+  document.getElementById('edit-cancel').addEventListener('click', closeSuggestEdit);
+  document.getElementById('edit-submit').addEventListener('click', submitSuggestEdit);
+
   // Add Sauna score slider value displays
   document.querySelectorAll('.add-scores input[type="range"]').forEach(slider => {
     slider.addEventListener('input', () => {
@@ -1331,7 +1347,9 @@ function setupListeners() {
   // Keyboard
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      if (!document.getElementById('add-sauna-modal').classList.contains('hidden')) {
+      if (!document.getElementById('edit-modal').classList.contains('hidden')) {
+        closeSuggestEdit();
+      } else if (!document.getElementById('add-sauna-modal').classList.contains('hidden')) {
         closeAddSauna();
       } else if (!document.getElementById('rating-modal').classList.contains('hidden')) {
         closeRating();
@@ -1531,6 +1549,145 @@ async function deleteUserSauna(id) {
     refreshAll();
   } catch (err) {
     alert('Failed to delete: ' + err.message);
+  }
+}
+
+// ── Suggest Edit ────────────────────────────
+let editTargetId = null;
+let editOriginal = null;
+
+function openSuggestEdit(id) {
+  const sauna = saunas.find(s => s.id === id);
+  if (!sauna) return;
+
+  editTargetId = id;
+  editOriginal = sauna;
+
+  document.getElementById('edit-sauna-label').textContent = `Editing: ${sauna.name}`;
+  document.getElementById('edit-name').value = sauna.name || '';
+  document.getElementById('edit-city').value = sauna.city || '';
+  document.getElementById('edit-country').value = sauna.country || '';
+  document.getElementById('edit-address').value = sauna.address || '';
+  document.getElementById('edit-type').value = sauna.type || 'other';
+  document.getElementById('edit-hours').value = sauna.hours || '';
+  document.getElementById('edit-price').value = sauna.price || '';
+  document.getElementById('edit-website').value = sauna.website || '';
+  document.getElementById('edit-nude').checked = !!sauna.nude;
+  document.getElementById('edit-aufguss').checked = !!sauna.aufguss;
+  document.getElementById('edit-gender').value = sauna.gender || 'mixed';
+  document.getElementById('edit-highlights').value = sauna.highlights || '';
+
+  if (sauna.gear) {
+    document.getElementById('edit-gear-towel').value = sauna.gear.towel || 'bring';
+    document.getElementById('edit-gear-swimwear').value = sauna.gear.swimwear || 'required';
+    document.getElementById('edit-gear-lockers').value = sauna.gear.lockers || 'coin';
+    document.getElementById('edit-gear-shower').value = sauna.gear.shower || 'basic';
+  }
+
+  document.getElementById('edit-keyword').value = '';
+  document.getElementById('edit-status').textContent = '';
+  document.getElementById('edit-status').className = 'extract-status';
+
+  document.getElementById('edit-modal').classList.remove('hidden');
+}
+
+function closeSuggestEdit() {
+  document.getElementById('edit-modal').classList.add('hidden');
+  editTargetId = null;
+  editOriginal = null;
+}
+
+async function submitSuggestEdit() {
+  const keyword = document.getElementById('edit-keyword').value.trim();
+  const status = document.getElementById('edit-status');
+
+  if (!keyword) {
+    status.textContent = 'Keyword is required';
+    status.className = 'extract-status error';
+    return;
+  }
+
+  // Build changes object — only include fields that actually changed
+  const changes = {};
+  const fields = [
+    { id: 'edit-name', key: 'name', orig: editOriginal.name },
+    { id: 'edit-city', key: 'city', orig: editOriginal.city },
+    { id: 'edit-country', key: 'country', orig: editOriginal.country },
+    { id: 'edit-address', key: 'address', orig: editOriginal.address },
+    { id: 'edit-type', key: 'type', orig: editOriginal.type },
+    { id: 'edit-hours', key: 'hours', orig: editOriginal.hours },
+    { id: 'edit-price', key: 'price', orig: editOriginal.price },
+    { id: 'edit-website', key: 'website', orig: editOriginal.website },
+    { id: 'edit-highlights', key: 'highlights', orig: editOriginal.highlights },
+    { id: 'edit-gender', key: 'gender', orig: editOriginal.gender },
+  ];
+
+  for (const f of fields) {
+    const val = document.getElementById(f.id).value.trim() || null;
+    if (val !== (f.orig || null)) changes[f.key] = val;
+  }
+
+  const nudeVal = document.getElementById('edit-nude').checked;
+  if (nudeVal !== !!editOriginal.nude) changes.nude = nudeVal;
+
+  const aufgussVal = document.getElementById('edit-aufguss').checked;
+  if (aufgussVal !== !!editOriginal.aufguss) changes.aufguss = aufgussVal;
+
+  // Gear changes
+  const gearChanges = {};
+  const origGear = editOriginal.gear || {};
+  const gearFields = [
+    { id: 'edit-gear-towel', key: 'towel' },
+    { id: 'edit-gear-swimwear', key: 'swimwear' },
+    { id: 'edit-gear-lockers', key: 'lockers' },
+    { id: 'edit-gear-shower', key: 'shower' },
+  ];
+  for (const g of gearFields) {
+    const val = document.getElementById(g.id).value;
+    if (val !== (origGear[g.key] || '')) gearChanges[g.key] = val;
+  }
+  if (Object.keys(gearChanges).length > 0) changes.gear = gearChanges;
+
+  if (Object.keys(changes).length === 0) {
+    status.textContent = 'No changes detected';
+    status.className = 'extract-status error';
+    return;
+  }
+
+  const btn = document.getElementById('edit-submit');
+  btn.textContent = 'Submitting...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(WORKER_URL + '/edits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        saunaId: editTargetId,
+        saunaName: editOriginal.name,
+        changes,
+        keyword,
+        contributorId: getContributorId(),
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      status.textContent = data.error || 'Failed to submit edit';
+      status.className = 'extract-status error';
+      return;
+    }
+
+    status.textContent = 'Edit submitted for review!';
+    status.className = 'extract-status success';
+    setTimeout(() => closeSuggestEdit(), 1500);
+  } catch (err) {
+    status.textContent = 'Network error. Try again.';
+    status.className = 'extract-status error';
+  } finally {
+    btn.textContent = 'Submit Edit';
+    btn.disabled = false;
   }
 }
 
