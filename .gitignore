@@ -9,3 +9,7 @@ worker/.wrangler/
 
 # macOS
 .DS_Store
+
+.dev.vars*
+!.dev.vars.example
+!.env.example
