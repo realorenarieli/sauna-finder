@@ -116,6 +116,7 @@ function ensureProfileFields() {
 
 function saveProfile() {
   localStorage.setItem('saunaProfile', JSON.stringify(profile));
+  invalidateWeightsCache();
 }
 
 function getContributorId() {
@@ -133,6 +134,7 @@ async function fetchSaunas() {
   const res = await fetch(WORKER_URL + '/saunas');
   if (!res.ok) throw new Error('Failed to load saunas');
   saunas = await res.json();
+  invalidateSimilarCache();
 }
 
 async function addCommunitySauna(data) {
@@ -147,6 +149,7 @@ async function addCommunitySauna(data) {
   }
   const sauna = await res.json();
   saunas.push(sauna);
+  invalidateSimilarCache();
   return sauna;
 }
 
@@ -201,22 +204,31 @@ async function geocodeAddress(address, city, country) {
   return null;
 }
 
+// ── Utilities ────────────────────────────────
+function debounce(fn, ms) {
+  let timer;
+  return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
+}
+
 // ── Scoring ──────────────────────────────────
 function calcScore(sauna, weights) {
-  const dims = Object.keys(DEFAULT_WEIGHTS);
-  return dims.reduce((sum, d) => sum + (sauna.scores[d] / 10) * weights[d], 0) * 100;
+  return SCORE_DIMS.reduce((sum, d) => sum + (sauna.scores[d] / 10) * weights[d], 0) * 100;
 }
 
 function finnishScore(sauna) {
   return calcScore(sauna, DEFAULT_WEIGHTS);
 }
 
+const _similarCache = new Map();
+function invalidateSimilarCache() { _similarCache.clear(); }
+
 function findSimilar(sauna, count = 5) {
-  const dims = Object.keys(DEFAULT_WEIGHTS);
-  return saunas
+  const key = sauna.id + '|' + count;
+  if (_similarCache.has(key)) return _similarCache.get(key);
+  const result = saunas
     .filter(s => s.id !== sauna.id)
     .map(s => {
-      const dist = Math.sqrt(dims.reduce((sum, d) => {
+      const dist = Math.sqrt(SCORE_DIMS.reduce((sum, d) => {
         const diff = (sauna.scores[d] || 5) - (s.scores[d] || 5);
         return sum + diff * diff;
       }, 0));
@@ -224,6 +236,8 @@ function findSimilar(sauna, count = 5) {
     })
     .sort((a, b) => a.dist - b.dist)
     .slice(0, count);
+  _similarCache.set(key, result);
+  return result;
 }
 
 function scoreTier(score) {
@@ -239,59 +253,55 @@ function computeLearnedWeights() {
   const ratedIds = Object.keys(profile.ratings);
   if (ratedIds.length < 2) return null;
 
-  const dims = Object.keys(DEFAULT_WEIGHTS);
   const ratedSaunas = ratedIds.map(id => saunas.find(s => s.id === id)).filter(Boolean);
   if (ratedSaunas.length < 2) return null;
 
-  // Correlation-based: how well does each dimension predict user happiness?
   const correlations = {};
-  for (const dim of dims) {
+  for (const dim of SCORE_DIMS) {
     let weightedSum = 0;
     let totalWeight = 0;
     for (const sauna of ratedSaunas) {
-      const rating = (profile.ratings[sauna.id] - 1) / 4; // normalize 0-1
-      const dimScore = sauna.scores[dim] / 10;             // normalize 0-1
+      const rating = (profile.ratings[sauna.id] - 1) / 4;
+      const dimScore = sauna.scores[dim] / 10;
       weightedSum += rating * dimScore;
-      totalWeight += dimScore; // avoid bias toward saunas that score 0 everywhere
+      totalWeight += dimScore;
     }
     correlations[dim] = totalWeight > 0 ? weightedSum / ratedSaunas.length : 0;
   }
 
-  // Normalize to sum to 1
   const total = Object.values(correlations).reduce((a, b) => a + b, 0);
   if (total <= 0) return null;
 
   const learned = {};
-  for (const dim of dims) {
-    learned[dim] = correlations[dim] / total;
-  }
+  for (const dim of SCORE_DIMS) learned[dim] = correlations[dim] / total;
 
-  // Blend with defaults — more ratings = more trust in learned weights
   const alpha = Math.min(1, ratedSaunas.length / 8);
   const blended = {};
-  for (const dim of dims) {
+  for (const dim of SCORE_DIMS) {
     blended[dim] = alpha * learned[dim] + (1 - alpha) * DEFAULT_WEIGHTS[dim];
   }
 
   return blended;
 }
 
+let _weightsCache = null;
+function invalidateWeightsCache() { _weightsCache = null; }
+
 function getEffectiveWeights() {
-  // Priority: learned from ratings > onboarding preferences > defaults
+  if (_weightsCache) return _weightsCache;
+
   const learned = computeLearnedWeights();
-  if (learned) return learned;
+  if (learned) { _weightsCache = learned; return learned; }
 
   if (profile.preferences) {
-    // Convert preference sliders (0-10) to weights
-    const dims = Object.keys(DEFAULT_WEIGHTS);
-    const total = dims.reduce((s, d) => s + (profile.preferences[d] || 5), 0);
+    const total = SCORE_DIMS.reduce((s, d) => s + (profile.preferences[d] || 5), 0);
     const weights = {};
-    for (const d of dims) {
-      weights[d] = (profile.preferences[d] || 5) / total;
-    }
+    for (const d of SCORE_DIMS) weights[d] = (profile.preferences[d] || 5) / total;
+    _weightsCache = weights;
     return weights;
   }
 
+  _weightsCache = DEFAULT_WEIGHTS;
   return DEFAULT_WEIGHTS;
 }
 
@@ -412,11 +422,33 @@ function openNowTag(hoursStr) {
 // ── Map ──────────────────────────────────────
 function initMap() {
   map = L.map('map', { zoomControl: true }).setView([54, 18], 4);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+
+  // Tile layers
+  const lightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; OpenStreetMap &copy; CARTO',
     maxZoom: 19,
     subdomains: 'abcd',
-  }).addTo(map);
+  });
+  const darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap &copy; CARTO',
+    maxZoom: 19,
+    subdomains: 'abcd',
+  });
+  const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: '&copy; Esri',
+    maxZoom: 19,
+  });
+  const topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenTopoMap',
+    maxZoom: 17,
+  });
+  lightLayer.addTo(map);
+  L.control.layers({
+    'Light': lightLayer,
+    'Dark': darkLayer,
+    'Satellite': satelliteLayer,
+    'Terrain': topoLayer,
+  }, null, { position: 'topleft', collapsed: true }).addTo(map);
   markerLayer = L.markerClusterGroup({
     maxClusterRadius: 40,
     spiderfyOnMaxZoom: true,
@@ -439,6 +471,22 @@ function initMap() {
       });
     },
   }).addTo(map);
+
+  // Cluster hover preview — show mini sauna list on mouseover
+  markerLayer.on('clustermouseover', e => {
+    const cluster = e.layer;
+    const children = cluster.getAllChildMarkers();
+    const preview = children.slice(0, 5).map(m => {
+      const ll = m.getLatLng();
+      const s = filteredSaunas.find(s => s.lat === ll.lat && s.lng === ll.lng);
+      return s ? `<div style="font-size:12px;padding:2px 0;white-space:nowrap">${s.name} <span style="color:var(--text-3)">${Math.round(finnishScore(s))}</span></div>` : '';
+    }).filter(Boolean).join('');
+    const extra = children.length > 5 ? `<div style="font-size:11px;color:var(--text-3)">+${children.length - 5} more</div>` : '';
+    cluster.bindTooltip(`<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif">${preview}${extra}</div>`, { className: 'sauna-tooltip', sticky: true }).openTooltip();
+  });
+  markerLayer.on('clustermouseout', e => {
+    e.layer.unbindTooltip();
+  });
 
   // ── Unified map toolbar ──────────────────────
   const MapToolbar = L.Control.extend({
@@ -495,12 +543,7 @@ function initMap() {
 
       // Marker mode toggles
       wrapper.querySelectorAll('.marker-toggle-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          markerMode = btn.dataset.mode;
-          wrapper.querySelectorAll('.marker-toggle-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          renderMarkers();
-        });
+        btn.addEventListener('click', () => setMarkerMode(btn.dataset.mode));
       });
 
       return wrapper;
@@ -508,18 +551,55 @@ function initMap() {
   });
   new MapToolbar().addTo(map);
 
-  // Show "Search this area" after user pans/zooms
-  map.on('moveend', () => {
+  // Right-click context menu
+  map.on('contextmenu', e => {
+    const { lat, lng } = e.latlng;
+    const popup = L.popup({ className: 'map-context-menu' })
+      .setLatLng(e.latlng)
+      .setContent(`
+        <div class="context-menu">
+          <button class="context-btn" data-action="center">&#9678; Center here</button>
+          <button class="context-btn" data-action="nearby">&#9737; Nearby saunas</button>
+          <button class="context-btn" data-action="directions">&#128506; Directions from here</button>
+          <div class="context-coords">${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
+        </div>
+      `)
+      .openOn(map);
+
+    setTimeout(() => {
+      popup.getElement()?.querySelector('[data-action="center"]')?.addEventListener('click', () => {
+        map.setView([lat, lng], map.getZoom());
+        map.closePopup();
+      });
+      popup.getElement()?.querySelector('[data-action="nearby"]')?.addEventListener('click', () => {
+        userLocation = { lat, lng };
+        document.getElementById('sort-by').value = 'nearest';
+        if (userLocationMarker) map.removeLayer(userLocationMarker);
+        userLocationMarker = L.circleMarker([lat, lng], {
+          radius: 8, color: '#3a6b8b', fillColor: '#5ba3d9', fillOpacity: 0.9, weight: 2,
+        }).addTo(map).bindTooltip('Search point', { className: 'sauna-tooltip' });
+        map.closePopup();
+        refreshAll();
+      });
+      popup.getElement()?.querySelector('[data-action="directions"]')?.addEventListener('click', () => {
+        window.open(`https://www.google.com/maps/dir/${lat},${lng}/`, '_blank');
+        map.closePopup();
+      });
+    }, 0);
+  });
+
+  // Show "Search this area" after user pans/zooms (debounced)
+  const debouncedMoveEnd = debounce(() => {
     if (searchAreaBtn && mapBoundsFilter) {
       searchAreaBtn.style.display = '';
     }
-  });
-  map.on('zoomend moveend', () => {
-    if (searchAreaBtn && !mapBoundsFilter) {
-      if (mapInteracted) searchAreaBtn.style.display = '';
+    if (searchAreaBtn && !mapBoundsFilter && mapInteracted) {
+      searchAreaBtn.style.display = '';
     }
     mapInteracted = true;
-  });
+    syncMapHash();
+  }, 200);
+  map.on('moveend zoomend', debouncedMoveEnd);
 }
 
 // ── Geolocation ─────────────────────────────
@@ -546,23 +626,46 @@ function formatDistance(km) {
 }
 
 let userLocationMarker = null;
+let geoWatchId = null;
+
+function updateUserMarker() {
+  if (!userLocation) return;
+  if (userLocationMarker) {
+    userLocationMarker.setLatLng([userLocation.lat, userLocation.lng]);
+  } else {
+    userLocationMarker = L.circleMarker([userLocation.lat, userLocation.lng], {
+      radius: 8, color: '#3a6b8b', fillColor: '#5ba3d9', fillOpacity: 0.9, weight: 2,
+    }).addTo(map).bindTooltip('You are here', { className: 'sauna-tooltip' });
+  }
+}
 
 function locateUser() {
   if (!navigator.geolocation) {
     alert('Geolocation is not supported by your browser.');
     return;
   }
+
+  // Start continuous tracking if not already active
+  if (!geoWatchId) {
+    geoWatchId = navigator.geolocation.watchPosition(
+      pos => {
+        userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        updateUserMarker();
+        // Re-sort if sorted by nearest (debounced to avoid thrash)
+        if (document.getElementById('sort-by').value === 'nearest') {
+          debouncedLocationRefresh();
+        }
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
+  // Immediate position for first use
   navigator.geolocation.getCurrentPosition(
     pos => {
       userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-
-      // Add/update user location marker
-      if (userLocationMarker) map.removeLayer(userLocationMarker);
-      userLocationMarker = L.circleMarker([userLocation.lat, userLocation.lng], {
-        radius: 8, color: '#3a6b8b', fillColor: '#5ba3d9', fillOpacity: 0.9, weight: 2,
-      }).addTo(map).bindTooltip('You are here', { className: 'sauna-tooltip' });
-
-      // Switch to nearest sort
+      updateUserMarker();
       document.getElementById('sort-by').value = 'nearest';
       map.flyTo([userLocation.lat, userLocation.lng], 8, { duration: 1 });
       refreshAll();
@@ -575,66 +678,117 @@ function locateUser() {
   );
 }
 
+const debouncedLocationRefresh = debounce(() => refreshAll(), 3000);
+
+function setMarkerMode(mode) {
+  markerMode = mode;
+  document.querySelectorAll('.marker-toggle-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  renderMarkers();
+}
+
+function buildMarkerIcon(sauna, isSelected) {
+  const size = isSelected ? 32 : 26;
+  const half = size / 2;
+  let content, fontSize, bg, border, color;
+
+  if (markerMode === 'type') {
+    content = TYPE_ICONS[sauna.type] || '♨️';
+    fontSize = isSelected ? 16 : 14;
+    bg = isSelected ? '#6b5234' : '#fdf9f4';
+    border = '#6b5234';
+    color = isSelected ? '#fdf9f4' : '#6b5234';
+  } else if (markerMode === 'nude') {
+    content = sauna.nude ? '🍆' : '👖';
+    fontSize = isSelected ? 16 : 13;
+    bg = isSelected ? (sauna.nude ? '#3a6b8b' : '#6b5234') : (sauna.nude ? '#e4eef6' : '#fdf9f4');
+    border = sauna.nude ? '#3a6b8b' : '#b0a090';
+    color = sauna.nude ? '#3a6b8b' : '#6b5234';
+  } else {
+    content = Math.round(finnishScore(sauna));
+    fontSize = isSelected ? 12 : 10;
+    bg = isSelected ? '#6b5234' : '#fdf9f4';
+    border = '#6b5234';
+    color = isSelected ? '#fdf9f4' : '#6b5234';
+  }
+
+  const borderStyle = sauna.communityAdded ? 'dashed' : 'solid';
+  return L.divIcon({
+    className: 'custom-marker',
+    html: `<div style="
+      width:${size}px;height:${size}px;border-radius:50%;
+      background:${bg};border:2px ${borderStyle} ${border};
+      box-shadow:0 1px 4px rgba(59,47,32,0.25);
+      display:flex;align-items:center;justify-content:center;
+      font-size:${fontSize}px;font-weight:600;color:${color};
+      transition:all 0.15s;line-height:1;
+    ">${content}</div>`,
+    iconSize: [size, size],
+    iconAnchor: [half, half],
+  });
+}
+
 function renderMarkers() {
   markerLayer.clearLayers();
+  const markers = [];
   for (const sauna of filteredSaunas) {
     if (sauna.lat == null || sauna.lng == null) continue;
-    const isSelected = sauna.id === selectedId;
-    const size = isSelected ? 32 : 26;
-    const half = size / 2;
-
-    let content, fontSize, bg, border, color;
-    if (markerMode === 'type') {
-      content = TYPE_ICONS[sauna.type] || '♨️';
-      fontSize = isSelected ? 16 : 14;
-      bg = isSelected ? '#6b5234' : '#fdf9f4';
-      border = '#6b5234';
-      color = isSelected ? '#fdf9f4' : '#6b5234';
-    } else if (markerMode === 'nude') {
-      content = sauna.nude ? '🍆' : '👖';
-      fontSize = isSelected ? 16 : 13;
-      bg = isSelected ? (sauna.nude ? '#3a6b8b' : '#6b5234') : (sauna.nude ? '#e4eef6' : '#fdf9f4');
-      border = sauna.nude ? '#3a6b8b' : '#b0a090';
-      color = sauna.nude ? '#3a6b8b' : '#6b5234';
-    } else {
-      content = Math.round(finnishScore(sauna));
-      fontSize = isSelected ? 12 : 10;
-      bg = isSelected ? '#6b5234' : '#fdf9f4';
-      border = '#6b5234';
-      color = isSelected ? '#fdf9f4' : '#6b5234';
-    }
-
-    const borderStyle = sauna.communityAdded ? 'dashed' : 'solid';
-    const icon = L.divIcon({
-      className: 'custom-marker',
-      html: `<div style="
-        width: ${size}px; height: ${size}px;
-        border-radius: 50%;
-        background: ${bg};
-        border: 2px ${borderStyle} ${border};
-        box-shadow: 0 1px 4px rgba(59,47,32,0.25);
-        display: flex; align-items: center; justify-content: center;
-        font-size: ${fontSize}px; font-weight: 600;
-        color: ${color};
-        transition: all 0.15s;
-        line-height: 1;
-      ">${content}</div>`,
-      iconSize: [size, size],
-      iconAnchor: [half, half],
-    });
-
+    const icon = buildMarkerIcon(sauna, sauna.id === selectedId);
     const marker = L.marker([sauna.lat, sauna.lng], { icon })
       .on('click', () => openDetail(sauna.id))
       .bindTooltip(sauna.name, { offset: [0, -14], className: 'sauna-tooltip' });
-
-    markerLayer.addLayer(marker);
+    markers.push(marker);
   }
+  markerLayer.addLayers(markers); // bulk add for better cluster performance
 }
 
-// ── UI: Sauna List ───────────────────────────
+// ── UI: Sauna List (progressive rendering) ──
+const LIST_BATCH = 30; // render this many at a time
+let _listRendered = 0;
+let _listScrollHandler = null;
+
+function renderCardHTML(sauna) {
+  const fs = finnishScore(sauna);
+  const fy = forYouScore(sauna);
+  const isVisited = !!profile.ratings[sauna.id];
+  const isWishlisted = !!profile.wishlist[sauna.id];
+
+  return `
+    <div class="sauna-card ${selectedId === sauna.id ? 'active' : ''}" data-id="${sauna.id}">
+      <div class="sauna-card-info">
+        <div class="sauna-card-name">${isWishlisted ? '<span class="wishlist-indicator" title="On your wishlist">&#9829;</span> ' : ''}${sauna.name}</div>
+        <div class="sauna-card-location">${sauna.city}, ${sauna.country}${userLocation && sauna.lat != null ? ` &middot; ${formatDistance(distanceToUser(sauna))}` : ''}</div>
+        <div class="sauna-card-meta">
+          ${openNowTag(sauna.hours)}
+          <span class="tag">${TYPE_LABELS[sauna.type] || sauna.type}</span>
+          <span class="tag">${sauna.price}</span>
+          ${sauna.nude ? '<span class="tag tag-nude">DICKS OUT</span>' : ''}
+          ${sauna.aufguss ? '<span class="tag tag-aufguss">AUFGUSS</span>' : ''}
+          ${sauna.gender && sauna.gender !== 'mixed' ? `<span class="tag tag-gender">${GENDER_LABELS[sauna.gender] || sauna.gender}</span>` : ''}
+          ${sauna.communityAdded ? '<span class="tag tag-user-added">Community</span>' : ''}
+          ${isVisited ? `<span class="tag">${'★'.repeat(profile.ratings[sauna.id])} visited</span>` : ''}
+        </div>
+      </div>
+      <div class="score-col">
+        <div class="score-num">${Math.round(fs)}</div>
+        ${fy !== null ? `<div class="score-foryou">${Math.round(fy)} for you</div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function renderMoreCards() {
+  const list = document.getElementById('sauna-list');
+  const end = Math.min(_listRendered + LIST_BATCH, filteredSaunas.length);
+  if (_listRendered >= end) return;
+  const html = filteredSaunas.slice(_listRendered, end).map(renderCardHTML).join('');
+  list.insertAdjacentHTML('beforeend', html);
+  _listRendered = end;
+}
+
 function renderList() {
   const list = document.getElementById('sauna-list');
-  // Sauna count badge
   const countBadge = document.getElementById('sauna-count');
   if (countBadge) {
     countBadge.textContent = filteredSaunas.length === saunas.length
@@ -644,43 +798,25 @@ function renderList() {
 
   if (filteredSaunas.length === 0) {
     list.innerHTML = '<p style="padding:20px;color:var(--text-light);text-align:center">No saunas match your filters</p>';
+    _listRendered = 0;
     return;
   }
 
-  list.innerHTML = filteredSaunas.map(sauna => {
-    const fs = finnishScore(sauna);
-    const fy = forYouScore(sauna);
-    const isVisited = !!profile.ratings[sauna.id];
-    const isWishlisted = !!profile.wishlist[sauna.id];
+  // Render first batch
+  _listRendered = 0;
+  const firstBatch = filteredSaunas.slice(0, LIST_BATCH);
+  list.innerHTML = firstBatch.map(renderCardHTML).join('');
+  _listRendered = firstBatch.length;
 
-    return `
-      <div class="sauna-card ${selectedId === sauna.id ? 'active' : ''}" data-id="${sauna.id}">
-        <div class="sauna-card-info">
-          <div class="sauna-card-name">${isWishlisted ? '<span class="wishlist-indicator" title="On your wishlist">&#9829;</span> ' : ''}${sauna.name}</div>
-          <div class="sauna-card-location">${sauna.city}, ${sauna.country}${userLocation && sauna.lat != null ? ` &middot; ${formatDistance(distanceToUser(sauna))}` : ''}</div>
-          <div class="sauna-card-meta">
-            ${openNowTag(sauna.hours)}
-            <span class="tag">${TYPE_LABELS[sauna.type] || sauna.type}</span>
-            <span class="tag">${sauna.price}</span>
-            ${sauna.nude ? '<span class="tag tag-nude">DICKS OUT</span>' : ''}
-            ${sauna.aufguss ? '<span class="tag tag-aufguss">AUFGUSS</span>' : ''}
-            ${sauna.gender && sauna.gender !== 'mixed' ? `<span class="tag tag-gender">${GENDER_LABELS[sauna.gender] || sauna.gender}</span>` : ''}
-            ${sauna.communityAdded ? '<span class="tag tag-user-added">Community</span>' : ''}
-            ${isVisited ? `<span class="tag">${'★'.repeat(profile.ratings[sauna.id])} visited</span>` : ''}
-          </div>
-        </div>
-        <div class="score-col">
-          <div class="score-num">${Math.round(fs)}</div>
-          ${fy !== null ? `<div class="score-foryou">${Math.round(fy)} for you</div>` : ''}
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  // Card click handlers
-  list.querySelectorAll('.sauna-card').forEach(card => {
-    card.addEventListener('click', () => openDetail(card.dataset.id));
-  });
+  // Progressive load on scroll
+  if (_listScrollHandler) list.removeEventListener('scroll', _listScrollHandler);
+  _listScrollHandler = () => {
+    if (_listRendered >= filteredSaunas.length) return;
+    if (list.scrollTop + list.clientHeight >= list.scrollHeight - 100) {
+      renderMoreCards();
+    }
+  };
+  list.addEventListener('scroll', _listScrollHandler, { passive: true });
 }
 
 // ── UI: Detail Panel ─────────────────────────
@@ -1195,23 +1331,36 @@ function fitMapToSaunas() {
   refreshAll();
 }
 
+let _refreshRAF = null;
 function refreshAll(fitMap = false) {
   applyFilters();
-  renderList();
-  renderMarkers();
-  renderTasteProfile();
-  renderRecommendations();
-  if (fitMap) fitMapToFiltered();
+  // Batch DOM writes into a single animation frame
+  if (_refreshRAF) cancelAnimationFrame(_refreshRAF);
+  _refreshRAF = requestAnimationFrame(() => {
+    _refreshRAF = null;
+    renderList();
+    renderMarkers();
+    renderTasteProfile();
+    renderRecommendations();
+    if (fitMap) fitMapToFiltered();
+  });
 }
 
 // ── Event Listeners ──────────────────────────
 function setupListeners() {
-  // Search & filters
-  document.getElementById('search').addEventListener('input', () => {
+  // Event delegation for sauna list (instead of per-card listeners)
+  document.getElementById('sauna-list').addEventListener('click', e => {
+    const card = e.target.closest('.sauna-card');
+    if (card) openDetail(card.dataset.id);
+  });
+
+  // Debounced search
+  const debouncedSearch = debounce(() => {
     mapBoundsFilter = null;
     if (searchAreaBtn) searchAreaBtn.style.display = 'none';
     refreshAll();
-  });
+  }, 150);
+  document.getElementById('search').addEventListener('input', debouncedSearch);
   document.getElementById('sort-by').addEventListener('change', refreshAll);
   const clearBoundsAndRefresh = (fitMap = false) => {
     mapBoundsFilter = null;
@@ -1350,9 +1499,13 @@ function setupListeners() {
     }
   });
 
-  // Keyboard
+  // Keyboard shortcuts
   document.addEventListener('keydown', e => {
+    const active = document.activeElement;
+    const isInput = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT');
+
     if (e.key === 'Escape') {
+      if (isInput) { active.blur(); return; }
       if (!document.getElementById('edit-modal').classList.contains('hidden')) {
         closeSuggestEdit();
       } else if (!document.getElementById('add-sauna-modal').classList.contains('hidden')) {
@@ -1362,6 +1515,39 @@ function setupListeners() {
       } else if (!document.getElementById('detail-panel').classList.contains('hidden')) {
         closeDetail();
       }
+      return;
+    }
+
+    // Skip shortcuts when typing in inputs
+    if (isInput) return;
+
+    // / — focus search
+    if (e.key === '/') {
+      e.preventDefault();
+      document.getElementById('search').focus();
+      return;
+    }
+
+    // 1/2/3 — marker mode toggle
+    if (e.key === '1') { setMarkerMode('score'); return; }
+    if (e.key === '2') { setMarkerMode('type'); return; }
+    if (e.key === '3') { setMarkerMode('nude'); return; }
+
+    // Arrow keys — navigate sauna list
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const cards = [...document.querySelectorAll('.sauna-card')];
+      if (cards.length === 0) return;
+      const currentIdx = cards.findIndex(c => c.classList.contains('active'));
+      let nextIdx;
+      if (e.key === 'ArrowDown') {
+        nextIdx = currentIdx < cards.length - 1 ? currentIdx + 1 : 0;
+      } else {
+        nextIdx = currentIdx > 0 ? currentIdx - 1 : cards.length - 1;
+      }
+      openDetail(cards[nextIdx].dataset.id);
+      cards[nextIdx].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      return;
     }
   });
 }
@@ -1876,14 +2062,36 @@ async function init() {
 
 function handleHashRoute() {
   const hash = window.location.hash;
-  const match = hash.match(/^#sauna\/(.+)$/);
-  if (match) {
-    const id = decodeURIComponent(match[1]);
+
+  // Deep link to sauna: #sauna/id
+  const saunaMatch = hash.match(/^#sauna\/(.+)$/);
+  if (saunaMatch) {
+    const id = decodeURIComponent(saunaMatch[1]);
     if (saunas.find(s => s.id === id)) {
       openDetail(id);
     }
+    return;
+  }
+
+  // Deep link to map position: #map/lat/lng/zoom
+  const mapMatch = hash.match(/^#map\/([-\d.]+)\/([-\d.]+)\/(\d+)$/);
+  if (mapMatch) {
+    const lat = parseFloat(mapMatch[1]);
+    const lng = parseFloat(mapMatch[2]);
+    const zoom = parseInt(mapMatch[3]);
+    if (Number.isFinite(lat) && Number.isFinite(lng) && zoom > 0) {
+      map.setView([lat, lng], zoom);
+    }
   }
 }
+
+// Sync map position to URL hash (debounced)
+const syncMapHash = debounce(() => {
+  if (selectedId) return; // don't overwrite sauna deep links
+  const c = map.getCenter();
+  const z = map.getZoom();
+  history.replaceState(null, '', `#map/${c.lat.toFixed(4)}/${c.lng.toFixed(4)}/${z}`);
+}, 500);
 
 
 function copyShareLink(id) {

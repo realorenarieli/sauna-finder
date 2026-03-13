@@ -1620,6 +1620,68 @@ a { color: var(--accent); }
   max-width: 90vw;
 }
 
+/* ── Context Menu (right-click) ──────────────── */
+.map-context-menu .leaflet-popup-content-wrapper {
+  background: var(--card);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(59, 47, 32, 0.18);
+  padding: 0;
+  border: 1px solid var(--border);
+}
+.map-context-menu .leaflet-popup-content { margin: 0; }
+.map-context-menu .leaflet-popup-tip { background: var(--card); border: 1px solid var(--border); }
+
+.context-menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+.context-btn {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+  white-space: nowrap;
+}
+.context-btn:hover { background: var(--hover); }
+.context-btn:first-child { border-radius: 6px 6px 0 0; }
+
+.context-coords {
+  padding: 6px 14px;
+  font-size: 10px;
+  color: var(--text-3);
+  border-top: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Layer control styling ──────────────────── */
+.leaflet-control-layers {
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(59, 47, 32, 0.12) !important;
+  background: var(--card) !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+}
+.leaflet-control-layers-toggle {
+  width: 32px !important;
+  height: 32px !important;
+}
+.leaflet-control-layers-expanded {
+  padding: 8px 12px !important;
+}
+.leaflet-control-layers label {
+  font-size: 12px !important;
+  color: var(--text) !important;
+}
+
 /* ── Utilities ───────────────────────────────── */
 .hidden { display: none !important; }
 
