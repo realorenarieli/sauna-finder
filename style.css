@@ -1079,72 +1079,107 @@ a { color: var(--accent); }
 /* Warm tint on map tiles */
 #map .leaflet-tile-pane { filter: sepia(15%) saturate(85%); }
 
-/* ── Marker mode toggle ──────────────────────── */
-.marker-toggle {
-  display: flex;
+/* ── Map Toolbar ─────────────────────────────── */
+.map-toolbar {
   background: var(--card);
-  border-radius: 6px;
-  overflow: hidden;
+  border-radius: 8px;
   border: 1px solid var(--border);
-  box-shadow: 0 1px 4px rgba(59,47,32,0.12);
-}
-
-.marker-toggle-btn {
-  padding: 6px 10px;
-  border: none;
-  background: var(--card);
-  color: var(--text-3);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  line-height: 1;
-}
-
-.marker-toggle-btn:first-child {
-  border-right: 1px solid var(--border);
-}
-
-.marker-toggle-btn:hover {
-  background: var(--hover);
-}
-
-.marker-toggle-btn.active {
-  background: var(--accent);
-  color: #f6f1ea;
-}
-
-/* ── Map nav group (Near Me + Show All) ──────── */
-.map-nav-group {
-  display: flex;
-  flex-direction: row;
+  box-shadow: 0 2px 8px rgba(59, 47, 32, 0.12);
   overflow: hidden;
-  border-radius: 4px;
-}
-.map-nav-group .locate-button:not(:last-child) {
-  border-right: 1px solid var(--border);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  min-width: 160px;
 }
 
-/* ── Locate / Near Me button ──────────────────── */
-.locate-button {
-  width: 34px;
-  height: 34px;
+.map-toolbar-toggle {
+  width: 100%;
+  padding: 7px 12px;
   border: none;
   background: var(--card);
   color: var(--accent);
-  font-size: 20px;
+  font-size: 14px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: background 0.15s, color 0.15s;
-  line-height: 1;
+  text-align: left;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.map-toolbar-toggle:hover { background: var(--hover); }
+
+.map-toolbar-body {
+  max-height: 300px;
+  overflow: hidden;
+  transition: max-height 0.25s ease, opacity 0.2s ease;
+  opacity: 1;
+}
+.map-toolbar-body.collapsed {
+  max-height: 0;
+  opacity: 0;
 }
 
-.locate-button:hover {
-  background: var(--hover);
-  color: var(--warm);
+.map-toolbar-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 8px;
+}
+
+.map-toolbar-section { padding: 6px 8px; }
+
+.map-toolbar-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-3);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.map-tb-btn {
+  display: block;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+  line-height: 1.2;
+}
+.map-tb-btn:hover { background: var(--hover); }
+
+.map-tb-search-area {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.map-toolbar-marker-btns {
+  display: flex;
+  gap: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.marker-toggle-btn {
+  flex: 1;
+  padding: 6px 8px;
+  border: none;
+  background: var(--card);
+  color: var(--text-2);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  line-height: 1;
+  text-align: center;
+}
+.marker-toggle-btn:not(:last-child) {
+  border-right: 1px solid var(--border);
+}
+.marker-toggle-btn:hover { background: var(--hover); }
+.marker-toggle-btn.active {
+  background: var(--accent);
+  color: #f6f1ea;
 }
 
 /* ── Marker clusters ─────────────────────────── */
@@ -1549,26 +1584,6 @@ a { color: var(--accent); }
   text-decoration: underline;
 }
 
-/* ── Search this area button ─────────────────── */
-.search-area-btn {
-  padding: 6px 14px;
-  background: var(--card);
-  color: var(--accent);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  cursor: pointer;
-  box-shadow: 0 1px 4px rgba(59,47,32,0.15);
-  transition: background 0.15s, border-color 0.15s;
-  white-space: nowrap;
-}
-
-.search-area-btn:hover {
-  background: var(--hover);
-  border-color: var(--warm);
-}
 
 /* ── Pull-to-Refresh Indicator ───────────────── */
 .pull-refresh-indicator {
@@ -1671,6 +1686,4 @@ a { color: var(--accent); }
   /* Modal full-width on mobile */
   .modal-content { width: 95%; max-height: 90vh; padding: 20px; }
 
-  /* Search area button sizing */
-  .search-area-btn { padding: 8px 16px; font-size: 13px; }
 }

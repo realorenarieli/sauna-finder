@@ -440,81 +440,84 @@ function initMap() {
     },
   }).addTo(map);
 
-  // "Near me" + "Show all" combined control
-  const NavControl = L.Control.extend({
+  // ── Unified map toolbar ──────────────────────
+  const MapToolbar = L.Control.extend({
     options: { position: 'topright' },
     onAdd() {
-      const container = L.DomUtil.create('div', 'leaflet-bar map-nav-group');
-      container.innerHTML = `
-        <button title="Near me" class="locate-button">&#9737;</button>
-        <button title="Show all saunas" class="locate-button" style="font-size:16px">&#8862;</button>
+      const wrapper = L.DomUtil.create('div', 'map-toolbar');
+      L.DomEvent.disableClickPropagation(wrapper);
+
+      wrapper.innerHTML = `
+        <button class="map-toolbar-toggle" title="Map tools">&#9776;</button>
+        <div class="map-toolbar-body">
+          <div class="map-toolbar-section map-toolbar-nav">
+            <button class="map-tb-btn" data-action="near" title="Near me">&#9737; Near me</button>
+            <button class="map-tb-btn" data-action="showall" title="Show all saunas">&#8862; Show all</button>
+            <button class="map-tb-btn" data-action="fit" title="Fit to filtered">&#9635; Fit filtered</button>
+            <button class="map-tb-btn map-tb-search-area" data-action="area" title="Search this area" style="display:none">&#8981; Search this area</button>
+          </div>
+          <div class="map-toolbar-divider"></div>
+          <div class="map-toolbar-section map-toolbar-markers">
+            <span class="map-toolbar-label">Markers</span>
+            <div class="map-toolbar-marker-btns">
+              <button class="marker-toggle-btn" data-mode="score" title="Show scores">123</button>
+              <button class="marker-toggle-btn active" data-mode="type" title="Show types">&#9973;</button>
+              <button class="marker-toggle-btn" data-mode="nude" title="Show nude policy">&#127814;</button>
+            </div>
+          </div>
+        </div>
       `;
-      L.DomEvent.disableClickPropagation(container);
-      const [nearMe, showAll] = container.querySelectorAll('button');
-      nearMe.addEventListener('click', locateUser);
-      showAll.addEventListener('click', () => {
+
+      const toggle = wrapper.querySelector('.map-toolbar-toggle');
+      const body = wrapper.querySelector('.map-toolbar-body');
+      const collapsed = localStorage.getItem('mapToolbarCollapsed') === '1';
+      if (collapsed) body.classList.add('collapsed');
+
+      toggle.addEventListener('click', () => {
+        body.classList.toggle('collapsed');
+        localStorage.setItem('mapToolbarCollapsed', body.classList.contains('collapsed') ? '1' : '');
+      });
+
+      // Nav actions
+      searchAreaBtn = wrapper.querySelector('.map-tb-search-area');
+      wrapper.querySelector('[data-action="near"]').addEventListener('click', locateUser);
+      wrapper.querySelector('[data-action="showall"]').addEventListener('click', () => {
         if (selectedId) closeDetail();
         fitMapToSaunas();
       });
-      return container;
-    },
-  });
-  new NavControl().addTo(map);
+      wrapper.querySelector('[data-action="fit"]').addEventListener('click', () => {
+        fitMapToFiltered();
+      });
+      searchAreaBtn.addEventListener('click', () => {
+        mapBoundsFilter = map.getBounds();
+        searchAreaBtn.style.display = 'none';
+        refreshAll();
+      });
 
-  // Marker mode toggle control
-  const MarkerToggle = L.Control.extend({
-    options: { position: 'topright' },
-    onAdd() {
-      const container = L.DomUtil.create('div', 'marker-toggle leaflet-bar');
-      container.innerHTML = `
-        <button class="marker-toggle-btn" data-mode="score" title="Show scores">123</button>
-        <button class="marker-toggle-btn active" data-mode="type" title="Show types">⛵</button>
-        <button class="marker-toggle-btn" data-mode="nude" title="Show nude policy">🍆</button>
-      `;
-      L.DomEvent.disableClickPropagation(container);
-      container.querySelectorAll('.marker-toggle-btn').forEach(btn => {
+      // Marker mode toggles
+      wrapper.querySelectorAll('.marker-toggle-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           markerMode = btn.dataset.mode;
-          container.querySelectorAll('.marker-toggle-btn').forEach(b => b.classList.remove('active'));
+          wrapper.querySelectorAll('.marker-toggle-btn').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
           renderMarkers();
         });
       });
-      return container;
-    },
-  });
-  new MarkerToggle().addTo(map);
 
-  // "Search this area" control
-  const AreaSearch = L.Control.extend({
-    options: { position: 'topleft' },
-    onAdd() {
-      const btn = L.DomUtil.create('button', 'search-area-btn leaflet-bar');
-      btn.innerHTML = 'Search this area';
-      btn.type = 'button';
-      btn.style.display = 'none';
-      L.DomEvent.disableClickPropagation(btn);
-      btn.addEventListener('click', () => {
-        mapBoundsFilter = map.getBounds();
-        btn.style.display = 'none';
-        refreshAll();
-      });
-      searchAreaBtn = btn;
-      return btn;
+      return wrapper;
     },
   });
-  new AreaSearch().addTo(map);
+  new MapToolbar().addTo(map);
 
   // Show "Search this area" after user pans/zooms
   map.on('moveend', () => {
     if (searchAreaBtn && mapBoundsFilter) {
-      searchAreaBtn.style.display = 'block';
+      searchAreaBtn.style.display = '';
     }
   });
   map.on('zoomend moveend', () => {
     if (searchAreaBtn && !mapBoundsFilter) {
-      // Only show after first user interaction (not initial load)
-      if (mapInteracted) searchAreaBtn.style.display = 'block';
+      if (mapInteracted) searchAreaBtn.style.display = '';
     }
     mapInteracted = true;
   });
