@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sauna Finder — Admin</title>
+  <meta name="robots" content="noindex, nofollow">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f6f1ea; --card: #fdf9f4; --text: #3b2f20; --text-2: #7a6b59;
+      --text-3: #a89880; --border: #e4dbd0; --hover: #f0e9df;
+      --accent: #6b5234; --warm: #c9a96e;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      max-width: 720px; margin: 0 auto; padding: 32px 20px;
+    }
+    h1 { font-size: 22px; color: var(--accent); font-family: Georgia, serif; margin-bottom: 4px; }
+    .subtitle { font-size: 13px; color: var(--text-3); margin-bottom: 24px; }
+    .login-section { margin-bottom: 24px; }
+    .login-row { display: flex; gap: 8px; }
+    input[type="text"], input[type="password"] {
+      padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px;
+      font-size: 13px; background: var(--card); color: var(--text); outline: none; flex: 1;
+    }
+    input:focus { border-color: var(--warm); }
+    .btn {
+      padding: 8px 16px; border: 1px solid var(--border); border-radius: 6px;
+      font-size: 13px; font-weight: 500; cursor: pointer; background: var(--card);
+      color: var(--text); transition: all 0.15s;
+    }
+    .btn:hover { background: var(--hover); border-color: var(--warm); }
+    .btn-primary { background: var(--accent); color: #f6f1ea; border-color: var(--accent); }
+    .btn-primary:hover { background: #8a7050; }
+    .btn-approve { background: #3a6b3a; color: #fff; border-color: #3a6b3a; }
+    .btn-approve:hover { background: #4a7b4a; }
+    .btn-reject { background: #8b3a3a; color: #fff; border-color: #8b3a3a; }
+    .btn-reject:hover { background: #a04a4a; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .status { font-size: 12px; margin-top: 8px; color: var(--text-3); min-height: 18px; }
+    .status.error { color: #8b3a3a; }
+    .count { font-size: 13px; color: var(--text-3); margin-bottom: 16px; }
+    .edit-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+      padding: 16px; margin-bottom: 12px;
+    }
+    .edit-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .edit-sauna { font-size: 15px; font-weight: 600; color: var(--accent); }
+    .edit-meta { font-size: 11px; color: var(--text-3); }
+    .edit-changes { margin-bottom: 12px; }
+    .change-row {
+      display: flex; gap: 8px; padding: 4px 0; font-size: 13px;
+      border-bottom: 1px solid var(--border);
+    }
+    .change-row:last-child { border-bottom: none; }
+    .change-field { font-weight: 600; color: var(--text-2); min-width: 80px; }
+    .change-value { color: var(--text); word-break: break-word; }
+    .edit-actions { display: flex; gap: 8px; }
+    .edit-actions .btn { flex: 1; text-align: center; }
+    .empty { text-align: center; padding: 40px 20px; color: var(--text-3); font-size: 14px; }
+    .back-link { display: inline-block; margin-top: 24px; font-size: 13px; color: var(--accent); text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <h1>Sauna Finder Admin</h1>
+  <p class="subtitle">Review and manage community edit suggestions</p>
+
+  <div id="login-section" class="login-section">
+    <div class="login-row">
+      <input type="password" id="admin-key" placeholder="Admin key" />
+      <button class="btn btn-primary" id="login-btn">Load Edits</button>
+    </div>
+    <p class="status" id="login-status"></p>
+  </div>
+
+  <div id="edits-section" class="hidden">
+    <p class="count" id="edits-count"></p>
+    <div id="edits-list"></div>
+  </div>
+
+  <a href="./" class="back-link">&larr; Back to Sauna Finder</a>
+
+  <script>
+    const API = 'https://sauna-finder-extractor.oren-arieli.workers.dev';
+    let adminKey = '';
+
+    document.getElementById('login-btn').addEventListener('click', loadEdits);
+    document.getElementById('admin-key').addEventListener('keydown', e => {
+      if (e.key === 'Enter') loadEdits();
+    });
+
+    // Auto-fill from URL param for convenience
+    const urlKey = new URLSearchParams(window.location.search).get('key');
+    if (urlKey) {
+      document.getElementById('admin-key').value = urlKey;
+      loadEdits();
+    }
+
+    async function loadEdits() {
+      adminKey = document.getElementById('admin-key').value.trim();
+      if (!adminKey) return;
+
+      const status = document.getElementById('login-status');
+      status.textContent = 'Loading...';
+      status.className = 'status';
+
+      try {
+        const res = await fetch(`${API}/edits?key=${encodeURIComponent(adminKey)}`);
+        if (!res.ok) {
+          const err = await res.json();
+          status.textContent = err.error || 'Unauthorized';
+          status.className = 'status error';
+          return;
+        }
+        const edits = await res.json();
+        status.textContent = '';
+        document.getElementById('login-section').classList.add('hidden');
+        renderEdits(edits);
+      } catch (e) {
+        status.textContent = 'Failed to connect';
+        status.className = 'status error';
+      }
+    }
+
+    function renderEdits(edits) {
+      const section = document.getElementById('edits-section');
+      section.classList.remove('hidden');
+
+      const count = document.getElementById('edits-count');
+      count.textContent = edits.length === 0
+        ? ''
+        : `${edits.length} pending edit${edits.length === 1 ? '' : 's'}`;
+
+      const list = document.getElementById('edits-list');
+      if (edits.length === 0) {
+        list.innerHTML = '<div class="empty">No pending edits. All clear!</div>';
+        return;
+      }
+
+      list.innerHTML = edits.map(edit => `
+        <div class="edit-card" id="edit-${edit.id}">
+          <div class="edit-header">
+            <div>
+              <div class="edit-sauna">${esc(edit.saunaName || edit.saunaId)}</div>
+              <div class="edit-meta">
+                ${new Date(edit.submittedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                &middot; ${esc(edit.contributorId)}
+              </div>
+            </div>
+          </div>
+          <div class="edit-changes">
+            ${renderChanges(edit.changes)}
+          </div>
+          <div class="edit-actions">
+            <button class="btn btn-approve" onclick="handleEdit('${edit.id}', 'approve', this)">Approve</button>
+            <button class="btn btn-reject" onclick="handleEdit('${edit.id}', 'reject', this)">Reject</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderChanges(changes) {
+      return Object.entries(changes).map(([key, value]) => {
+        if (key === 'gear' && typeof value === 'object') {
+          return Object.entries(value).map(([gk, gv]) =>
+            `<div class="change-row"><span class="change-field">${esc(gk)}</span><span class="change-value">${esc(String(gv))}</span></div>`
+          ).join('');
+        }
+        return `<div class="change-row"><span class="change-field">${esc(key)}</span><span class="change-value">${esc(String(value))}</span></div>`;
+      }).join('');
+    }
+
+    async function handleEdit(editId, action, btn) {
+      const card = document.getElementById(`edit-${editId}`);
+      const buttons = card.querySelectorAll('.btn');
+      buttons.forEach(b => b.disabled = true);
+      btn.textContent = action === 'approve' ? 'Approving...' : 'Rejecting...';
+
+      try {
+        const res = await fetch(`${API}/edits?action=${action}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ editId, key: adminKey }),
+        });
+        const result = await res.json();
+        if (result.error) {
+          btn.textContent = result.error;
+          buttons.forEach(b => b.disabled = false);
+          return;
+        }
+        card.style.opacity = '0.4';
+        card.style.pointerEvents = 'none';
+        btn.textContent = action === 'approve' ? 'Approved' : 'Rejected';
+      } catch (e) {
+        btn.textContent = 'Error';
+        buttons.forEach(b => b.disabled = false);
+      }
+    }
+
+    function esc(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+  </script>
+</body>
+</html>

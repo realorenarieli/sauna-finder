@@ -873,7 +873,7 @@ function closeDetail() {
   panel.classList.remove('visible');
   setTimeout(() => panel.classList.add('hidden'), 200);
   selectedId = null;
-  history.replaceState(null, '', window.location.pathname);
+  history.replaceState(null, '', window.location.pathname + window.location.search);
   // Restore previous map view
   if (mapViewBeforeDetail) {
     map.flyTo(mapViewBeforeDetail.center, mapViewBeforeDetail.zoom, { duration: 0.6 });
@@ -1899,5 +1899,10 @@ window.removeRating = removeRating;
 window.toggleWishlist = toggleWishlist;
 window.deleteUserSauna = deleteUserSauna;
 window.copyShareLink = copyShareLink;
+
+// ── PWA Service Worker ──────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
 
 init();

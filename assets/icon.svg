@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#6b5234"/>
+  <g fill="none" stroke="#f6f1ea" stroke-width="12" stroke-linecap="round">
+    <!-- Sauna house -->
+    <path d="M128 340 L256 220 L384 340" stroke-width="16"/>
+    <rect x="168" y="300" width="176" height="120" rx="4" fill="#f6f1ea" opacity="0.15"/>
+    <rect x="168" y="300" width="176" height="120" rx="4"/>
+    <!-- Door -->
+    <rect x="232" y="350" width="48" height="70" rx="3"/>
+    <!-- Steam wisps -->
+    <path d="M200 200 Q210 170 200 140" opacity="0.7"/>
+    <path d="M256 180 Q266 145 256 110" opacity="0.8"/>
+    <path d="M312 200 Q322 170 312 140" opacity="0.7"/>
+  </g>
+</svg>
