@@ -696,6 +696,7 @@ a { color: var(--accent); }
 .sauna-list {
   flex: 1;
   overflow-y: auto;
+  padding-bottom: 40px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 }
 
@@ -1854,6 +1855,11 @@ a { color: var(--accent); }
 .closed-banner-text strong { color: #6b3e1a; }
 
 .disclaimer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: var(--sidebar-w);
+  z-index: 1050;
   padding: 8px 20px;
   font-size: 11px;
   line-height: 1.4;
@@ -2031,7 +2037,6 @@ a { color: var(--accent); }
     height: 100vh;
     height: 100dvh;
     border-right: none;
-    padding-bottom: 64px; /* space for tab bar */
   }
 
   #map {
@@ -2105,13 +2110,16 @@ a { color: var(--accent); }
   /* Modal full-width on mobile */
   .modal-content { width: 95%; max-height: 90vh; padding: 20px; }
 
-  /* Disclaimer: extra bottom padding for tab bar */
+  /* Disclaimer: not fixed on mobile, sits below list */
   .disclaimer {
-    padding-bottom: 72px;
+    position: static;
+    width: 100%;
+    z-index: auto;
+    padding-bottom: 64px; /* clear tab bar */
   }
 
-  /* Sauna list: room for tab bar */
+  /* Sauna list: reset desktop padding */
   .sauna-list {
-    padding-bottom: 16px;
+    padding-bottom: 0;
   }
 }
