@@ -1446,6 +1446,19 @@ a { color: var(--accent); }
   letter-spacing: 0.3px;
 }
 
+.disclaimer {
+  padding: 14px 20px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-3);
+  text-align: center;
+  border-top: 1px solid var(--border);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+.disclaimer strong {
+  color: var(--text-2);
+}
+
 /* ── Search this area button ─────────────────── */
 .search-area-btn {
   padding: 6px 14px;
