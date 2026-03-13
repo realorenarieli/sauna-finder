@@ -910,6 +910,44 @@ a { color: var(--accent); }
 /* ── Buttons ─────────────────────────────────── */
 .detail-actions { padding: 16px 20px; }
 
+.detail-icon-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.icon-action {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text-2);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  line-height: 1;
+  padding: 0;
+}
+
+.icon-action:hover {
+  background: var(--hover);
+  border-color: var(--warm);
+  color: var(--accent);
+}
+
+.btn-wishlist-icon.wishlisted {
+  color: #c45050;
+  border-color: #d4a0a0;
+}
+
+.btn-wishlist-icon.wishlisted:hover {
+  background: #f6e4e4;
+}
+
 .btn {
   display: block;
   width: 100%;

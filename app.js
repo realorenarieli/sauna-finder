@@ -818,15 +818,11 @@ function openDetail(id) {
     </div>
 
     <div class="detail-actions">
-      <button class="btn btn-share" onclick="copyShareLink('${sauna.id}')">
-        &#128279; Copy Link
-      </button>
-      <button class="btn" onclick="openSuggestEdit('${sauna.id}')">
-        &#9998; Suggest Edit
-      </button>
-      <button class="btn btn-wishlist ${isWishlisted ? 'wishlisted' : ''}" onclick="toggleWishlist('${sauna.id}')">
-        ${isWishlisted ? '&#9829; On Wishlist' : '&#9825; Add to Wishlist'}
-      </button>
+      <div class="detail-icon-actions">
+        <button class="icon-action btn-share" onclick="copyShareLink('${sauna.id}')" title="Copy Link">&#128279;</button>
+        <button class="icon-action" onclick="openSuggestEdit('${sauna.id}')" title="Suggest Edit">&#9998;</button>
+        <button class="icon-action btn-wishlist-icon ${isWishlisted ? 'wishlisted' : ''}" onclick="toggleWishlist('${sauna.id}')" title="${isWishlisted ? 'On Wishlist' : 'Add to Wishlist'}">${isWishlisted ? '&#9829;' : '&#9825;'}</button>
+      </div>
       ${isVisited
         ? `<button class="btn" onclick="openRating('${sauna.id}')">
             ${'★'.repeat(profile.ratings[sauna.id])} Visited &mdash; re-rate
@@ -1887,8 +1883,9 @@ function copyShareLink(id) {
     const btn = document.querySelector('.btn-share');
     if (btn) {
       const orig = btn.innerHTML;
-      btn.innerHTML = '&#10003; Copied!';
-      setTimeout(() => { btn.innerHTML = orig; }, 1500);
+      btn.innerHTML = '&#10003;';
+      btn.title = 'Copied!';
+      setTimeout(() => { btn.innerHTML = orig; btn.title = 'Copy Link'; }, 1500);
     }
   }).catch(() => {
     // Fallback for older browsers
