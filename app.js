@@ -1045,7 +1045,7 @@ function applyFilters() {
   const country = document.getElementById('filter-country').value;
   const nude = document.getElementById('filter-nude').value;
   const gender = document.getElementById('filter-gender').value;
-  const aufguss = document.getElementById('filter-aufguss').value;
+  const openFilter = document.getElementById('filter-open').value;
   const wishlist = document.getElementById('filter-wishlist').value;
 
   filteredSaunas = saunas.filter(s => {
@@ -1055,10 +1055,11 @@ function applyFilters() {
     if (nude === 'nude' && !s.nude) return false;
     if (nude === 'clothed' && s.nude) return false;
     if (gender !== 'all' && (s.gender || 'mixed') !== gender) return false;
-    if (aufguss === 'yes' && !s.aufguss) return false;
+    if (openFilter === 'open' && isOpenNow(s.hours) !== true) return false;
     if (wishlist === 'wishlist' && !profile.wishlist[s.id]) return false;
     if (wishlist === 'visited' && !profile.ratings[s.id]) return false;
     if (wishlist === 'community' && !s.communityAdded) return false;
+    if (wishlist === 'aufguss' && !s.aufguss) return false;
     // Map bounds filter
     if (mapBoundsFilter && s.lat != null && s.lng != null) {
       if (!mapBoundsFilter.contains(L.latLng(s.lat, s.lng))) return false;
@@ -1100,7 +1101,7 @@ function updateFilterBadge() {
     document.getElementById('filter-country').value !== 'all',
     document.getElementById('filter-nude').value !== 'all',
     document.getElementById('filter-gender').value !== 'all',
-    document.getElementById('filter-aufguss').value !== 'all',
+    document.getElementById('filter-open').value !== 'all',
     document.getElementById('filter-wishlist').value !== 'all',
   ].filter(Boolean).length;
 
@@ -1158,7 +1159,7 @@ function setupListeners() {
   document.getElementById('filter-type').addEventListener('change', () => { updateFilterBadge(); refreshAll(); });
   document.getElementById('filter-nude').addEventListener('change', () => { updateFilterBadge(); refreshAll(); });
   document.getElementById('filter-gender').addEventListener('change', () => { updateFilterBadge(); refreshAll(); });
-  document.getElementById('filter-aufguss').addEventListener('change', () => { updateFilterBadge(); refreshAll(); });
+  document.getElementById('filter-open').addEventListener('change', () => { updateFilterBadge(); refreshAll(); });
   document.getElementById('filter-wishlist').addEventListener('change', () => { updateFilterBadge(); refreshAll(); });
   document.getElementById('filter-country').addEventListener('change', () => { updateFilterBadge(); refreshAll(true); });
 
@@ -1183,7 +1184,7 @@ function setupListeners() {
     document.getElementById('filter-country').value = 'all';
     document.getElementById('filter-nude').value = 'all';
     document.getElementById('filter-gender').value = 'all';
-    document.getElementById('filter-aufguss').value = 'all';
+    document.getElementById('filter-open').value = 'all';
     document.getElementById('filter-wishlist').value = 'all';
     mapBoundsFilter = null;
     if (searchAreaBtn) searchAreaBtn.style.display = 'none';
