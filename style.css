@@ -1980,48 +1980,116 @@ a { color: var(--accent); }
 /* ── Utilities ───────────────────────────────── */
 .hidden { display: none !important; }
 
+/* ── Mobile Tab Bar ──────────────────────────── */
+.mobile-tabs {
+  display: none; /* hidden on desktop */
+}
+
 /* ── Responsive ──────────────────────────────── */
 @media (max-width: 768px) {
   body { flex-direction: column; }
 
   :root { --sidebar-w: 100%; }
 
+  /* Mobile Tab Bar */
+  .mobile-tabs {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1200;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    padding: 4px 0;
+    padding-bottom: max(4px, env(safe-area-inset-bottom));
+  }
+
+  .mobile-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 0;
+    border: none;
+    background: none;
+    color: var(--text-3);
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+
+  .mobile-tab.active {
+    color: var(--accent);
+  }
+
+  .mobile-tab svg {
+    transition: stroke 0.15s;
+  }
+
+  /* Full-screen views — one visible at a time */
   #sidebar {
     width: 100%;
     min-width: unset;
-    height: 45vh;
+    height: 100vh;
+    height: 100dvh;
     border-right: none;
-    border-bottom: 1px solid var(--border);
+    padding-bottom: 64px; /* space for tab bar */
   }
 
-  #map { height: 55vh; }
-
-  /* Bottom-sheet style detail panel */
-  .detail-panel {
+  #map {
+    position: fixed;
+    top: 0;
     left: 0;
-    top: auto;
+    right: 0;
+    bottom: 0;
+    height: 100vh;
+    height: 100dvh;
+    padding-bottom: 56px;
+  }
+
+  /* Toggle visibility */
+  .mobile-view-hidden {
+    display: none !important;
+  }
+
+  /* Detail panel: full-screen overlay on mobile */
+  .detail-panel {
+    position: fixed;
+    left: 0;
+    top: 0;
     bottom: 0;
     width: 100%;
-    height: 85vh;
-    box-shadow: 0 -4px 24px rgba(59,47,32,0.15);
-    border-radius: 16px 16px 0 0;
-    transform: translateY(20px);
-    padding-bottom: 80px;
+    height: 100vh;
+    height: 100dvh;
+    box-shadow: none;
+    border-radius: 0;
+    transform: translateX(100%);
+    padding-bottom: 64px;
+    z-index: 1300;
+  }
+
+  .detail-panel.hidden {
+    transform: translateX(100%);
   }
 
   .detail-panel.visible {
-    transform: translateY(0);
+    transform: translateX(0);
   }
 
-  /* Drag handle indicator */
+  /* No drag handle on mobile — use back button */
   .detail-panel::before {
-    content: '';
-    display: block;
-    width: 40px;
-    height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    margin: 8px auto 0;
+    display: none;
+  }
+
+  /* Back button more prominent on mobile */
+  .detail-panel .close-btn {
+    font-size: 15px;
+    padding: 14px 16px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
   }
 
   /* Larger touch targets on mobile */
@@ -2038,9 +2106,15 @@ a { color: var(--accent); }
 
   /* Stack filter drawer full-width */
   .filter-drawer-grid { grid-template-columns: 1fr; }
-  .filter-drawer select { padding: 8px 10px; font-size: 13px; }
 
   /* Modal full-width on mobile */
   .modal-content { width: 95%; max-height: 90vh; padding: 20px; }
 
+  /* Disclaimer above tab bar */
+  .disclaimer { padding-bottom: 64px; }
+
+  /* Sauna list fills available space */
+  .sauna-list {
+    padding-bottom: 64px;
+  }
 }

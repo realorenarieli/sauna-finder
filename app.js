@@ -955,6 +955,7 @@ function openDetail(id) {
         <button class="icon-action btn-share" onclick="copyShareLink('${sauna.id}')" title="Copy Link">&#128279;</button>
         <button class="icon-action" onclick="openSuggestEdit('${sauna.id}')" title="Suggest Edit">&#9998;</button>
         <button class="icon-action btn-wishlist-icon ${isWishlisted ? 'wishlisted' : ''}" onclick="toggleWishlist('${sauna.id}')" title="${isWishlisted ? 'On Wishlist' : 'Add to Wishlist'}">${isWishlisted ? '&#9829;' : '&#9825;'}</button>
+        ${sauna.lat != null ? `<button class="icon-action btn-show-map" onclick="showOnMap('${sauna.id}')" title="Show on Map">&#127758;</button>` : ''}
       </div>
       ${isVisited
         ? `<button class="btn" onclick="openRating('${sauna.id}')">
@@ -1016,8 +1017,9 @@ function openDetail(id) {
   panel.classList.remove('hidden');
   requestAnimationFrame(() => panel.classList.add('visible'));
 
-  // Fly to marker and uncluster it
-  if (sauna.lat != null && sauna.lng != null) {
+  // Fly to marker and uncluster it (skip on mobile list view — map is hidden)
+  const mapVisible = !isMobile() || _mobileView === 'map';
+  if (sauna.lat != null && sauna.lng != null && mapVisible) {
     // Find the marker in the cluster group
     let targetMarker = null;
     markerLayer.eachLayer(m => {
@@ -1053,6 +1055,20 @@ function closeDetail() {
   applyFilters();
   renderMarkers();
   renderList();
+}
+
+function showOnMap(id) {
+  const sauna = saunas.find(s => s.id === id);
+  if (!sauna || sauna.lat == null) return;
+  closeDetail();
+  if (isMobile()) {
+    switchMobileView('map');
+    setTimeout(() => {
+      map.flyTo([sauna.lat, sauna.lng], Math.max(map.getZoom(), 15), { duration: 0.8 });
+    }, 100);
+  } else {
+    map.flyTo([sauna.lat, sauna.lng], Math.max(map.getZoom(), 15), { duration: 0.8 });
+  }
 }
 
 // ── Crowdsource Confirmations ─────────────────
@@ -2485,6 +2501,61 @@ function repopulateCountryFilter() {
   }
 }
 
+// ── Mobile View Toggle ──────────────────────
+let _mobileView = 'list'; // 'list' or 'map'
+
+function isMobile() {
+  return window.matchMedia('(max-width: 768px)').matches;
+}
+
+function switchMobileView(view) {
+  _mobileView = view;
+  const sidebar = document.getElementById('sidebar');
+  const mapEl = document.getElementById('map');
+  const tabs = document.querySelectorAll('.mobile-tab');
+
+  if (view === 'map') {
+    sidebar.classList.add('mobile-view-hidden');
+    mapEl.classList.remove('mobile-view-hidden');
+    // Leaflet needs a size recalc when its container becomes visible
+    setTimeout(() => map.invalidateSize(), 50);
+  } else {
+    mapEl.classList.add('mobile-view-hidden');
+    sidebar.classList.remove('mobile-view-hidden');
+  }
+
+  tabs.forEach(t => t.classList.toggle('active', t.dataset.view === view));
+}
+
+function setupMobileToggle() {
+  const tabs = document.getElementById('mobile-tabs');
+  if (!tabs) return;
+
+  tabs.addEventListener('click', e => {
+    const tab = e.target.closest('.mobile-tab');
+    if (!tab) return;
+    switchMobileView(tab.dataset.view);
+  });
+
+  // On mobile, start with list view; hide map initially
+  if (isMobile()) {
+    switchMobileView('list');
+  }
+
+  // Handle resize: clean up mobile classes when switching to desktop
+  window.addEventListener('resize', debounce(() => {
+    const sidebar = document.getElementById('sidebar');
+    const mapEl = document.getElementById('map');
+    if (!isMobile()) {
+      sidebar.classList.remove('mobile-view-hidden');
+      mapEl.classList.remove('mobile-view-hidden');
+      map.invalidateSize();
+    } else {
+      switchMobileView(_mobileView);
+    }
+  }, 150));
+}
+
 // ── Init ─────────────────────────────────────
 async function init() {
   try {
@@ -2500,6 +2571,7 @@ async function init() {
   initAllMultiSelects();
   populateCountryFilter();
   setupListeners();
+  setupMobileToggle();
   refreshAll();
 
   // Open sauna from URL hash (deep link)
@@ -2568,30 +2640,31 @@ window.removeRating = removeRating;
 window.toggleWishlist = toggleWishlist;
 window.deleteUserSauna = deleteUserSauna;
 window.copyShareLink = copyShareLink;
+window.showOnMap = showOnMap;
 
 // ── Swipe-to-Dismiss (mobile detail panel) ──
 function setupSwipeToDismiss() {
   const panel = document.getElementById('detail-panel');
-  let startY = 0;
-  let currentY = 0;
+  let startX = 0;
+  let currentX = 0;
   let dragging = false;
 
   panel.addEventListener('touchstart', e => {
-    // Only start drag if panel is scrolled to top
-    if (panel.scrollTop > 0) return;
-    startY = e.touches[0].clientY;
-    currentY = startY;
+    startX = e.touches[0].clientX;
+    currentX = startX;
+    // Only start swipe-right if touch starts in left 60px (edge gesture)
+    if (startX > 60) return;
     dragging = true;
     panel.style.transition = 'none';
   }, { passive: true });
 
   panel.addEventListener('touchmove', e => {
     if (!dragging) return;
-    currentY = e.touches[0].clientY;
-    const dy = currentY - startY;
-    if (dy > 0) {
-      panel.style.transform = `translateY(${dy}px)`;
-      panel.style.opacity = Math.max(0.3, 1 - dy / 400);
+    currentX = e.touches[0].clientX;
+    const dx = currentX - startX;
+    if (dx > 0) {
+      panel.style.transform = `translateX(${dx}px)`;
+      panel.style.opacity = Math.max(0.3, 1 - dx / 400);
     }
   }, { passive: true });
 
@@ -2599,8 +2672,8 @@ function setupSwipeToDismiss() {
     if (!dragging) return;
     dragging = false;
     panel.style.transition = '';
-    const dy = currentY - startY;
-    if (dy > 120) {
+    const dx = currentX - startX;
+    if (dx > 100) {
       closeDetail();
     } else {
       panel.style.transform = '';
