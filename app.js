@@ -91,6 +91,9 @@ let ratingValue = 0;
 let map, markerLayer;
 let markerMode = 'type'; // 'score' or 'type' or 'nude'
 let userLocation = null; // { lat, lng } from geolocation
+let mapBoundsFilter = null; // L.LatLngBounds or null
+let searchAreaBtn = null;
+let mapInteracted = false;
 
 // ── Profile (localStorage) ───────────────────
 function loadProfile() {
@@ -303,6 +306,99 @@ function topRecommendations(count = 3) {
     .slice(0, count);
 }
 
+// ── Hours parser / "Open now" ────────────────
+const DAY_MAP = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+
+function parseHoursSpec(hoursStr) {
+  if (!hoursStr) return null;
+  const lower = hoursStr.toLowerCase();
+
+  // 24/7
+  if (lower.includes('24/7')) return { alwaysOpen: true };
+
+  // "Daily (hours vary...)" — no concrete times
+  if (/daily\s*\(/.test(lower) && !lower.match(/daily\s+\d/)) return null;
+
+  // Strip parenthetical notes
+  const cleaned = hoursStr.replace(/\([^)]*\)/g, '').trim();
+
+  // Split on comma to get segments like "Mon-Fri 07:00-20:30"
+  const segments = cleaned.split(',').map(s => s.trim()).filter(Boolean);
+  const schedule = {}; // day-of-week (0-6) → { open, close } or 'closed'
+
+  for (const seg of segments) {
+    const closedMatch = seg.match(/^(\w{3}(?:-\w{3})?)\s+closed$/i);
+    if (closedMatch) {
+      for (const d of expandDayRange(closedMatch[1])) schedule[d] = 'closed';
+      continue;
+    }
+
+    const match = seg.match(/^(daily|\w{3}(?:-\w{3})?(?:\s*,\s*\w{3}(?:-\w{3})?)*)\s+(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})/i);
+    if (!match) continue;
+
+    const dayPart = match[1].toLowerCase();
+    const open = parseTime(match[2]);
+    const close = parseTime(match[3]);
+
+    const days = dayPart === 'daily' ? [0, 1, 2, 3, 4, 5, 6] : expandDayRange(dayPart);
+    for (const d of days) schedule[d] = { open, close };
+  }
+
+  return Object.keys(schedule).length > 0 ? { schedule } : null;
+}
+
+function expandDayRange(str) {
+  const parts = str.toLowerCase().split('-');
+  if (parts.length === 1) {
+    const d = DAY_MAP[parts[0]];
+    return d != null ? [d] : [];
+  }
+  const start = DAY_MAP[parts[0]];
+  const end = DAY_MAP[parts[1]];
+  if (start == null || end == null) return [];
+  const days = [];
+  let i = start;
+  while (true) {
+    days.push(i);
+    if (i === end) break;
+    i = (i + 1) % 7;
+  }
+  return days;
+}
+
+function parseTime(str) {
+  const [h, m] = str.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function isOpenNow(hoursStr) {
+  const spec = parseHoursSpec(hoursStr);
+  if (!spec) return null; // unknown
+  if (spec.alwaysOpen) return true;
+
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0=Sun
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+  const entry = spec.schedule[dayOfWeek];
+  if (!entry) return null; // no data for today
+  if (entry === 'closed') return false;
+
+  // Handle overnight (close time < open time means past midnight)
+  if (entry.close <= entry.open) {
+    return nowMinutes >= entry.open || nowMinutes < entry.close;
+  }
+  return nowMinutes >= entry.open && nowMinutes < entry.close;
+}
+
+function openNowTag(hoursStr) {
+  const open = isOpenNow(hoursStr);
+  if (open === null) return '';
+  return open
+    ? '<span class="tag tag-open">Open now</span>'
+    : '<span class="tag tag-closed">Closed</span>';
+}
+
 // ── Map ──────────────────────────────────────
 function initMap() {
   map = L.map('map', { zoomControl: true }).setView([54, 18], 4);
@@ -371,6 +467,40 @@ function initMap() {
     },
   });
   new MarkerToggle().addTo(map);
+
+  // "Search this area" control
+  const AreaSearch = L.Control.extend({
+    options: { position: 'topleft' },
+    onAdd() {
+      const btn = L.DomUtil.create('button', 'search-area-btn leaflet-bar');
+      btn.innerHTML = 'Search this area';
+      btn.type = 'button';
+      btn.style.display = 'none';
+      L.DomEvent.disableClickPropagation(btn);
+      btn.addEventListener('click', () => {
+        mapBoundsFilter = map.getBounds();
+        btn.style.display = 'none';
+        refreshAll();
+      });
+      searchAreaBtn = btn;
+      return btn;
+    },
+  });
+  new AreaSearch().addTo(map);
+
+  // Show "Search this area" after user pans/zooms
+  map.on('moveend', () => {
+    if (searchAreaBtn && mapBoundsFilter) {
+      searchAreaBtn.style.display = 'block';
+    }
+  });
+  map.on('zoomend moveend', () => {
+    if (searchAreaBtn && !mapBoundsFilter) {
+      // Only show after first user interaction (not initial load)
+      if (mapInteracted) searchAreaBtn.style.display = 'block';
+    }
+    mapInteracted = true;
+  });
 }
 
 // ── Geolocation ─────────────────────────────
@@ -485,6 +615,14 @@ function renderMarkers() {
 // ── UI: Sauna List ───────────────────────────
 function renderList() {
   const list = document.getElementById('sauna-list');
+  // Sauna count badge
+  const countBadge = document.getElementById('sauna-count');
+  if (countBadge) {
+    countBadge.textContent = filteredSaunas.length === saunas.length
+      ? `${saunas.length} saunas`
+      : `Showing ${filteredSaunas.length} of ${saunas.length}`;
+  }
+
   if (filteredSaunas.length === 0) {
     list.innerHTML = '<p style="padding:20px;color:var(--text-light);text-align:center">No saunas match your filters</p>';
     return;
@@ -502,6 +640,7 @@ function renderList() {
           <div class="sauna-card-name">${isWishlisted ? '<span class="wishlist-indicator" title="On your wishlist">&#9829;</span> ' : ''}${sauna.name}</div>
           <div class="sauna-card-location">${sauna.city}, ${sauna.country}${userLocation && sauna.lat != null ? ` &middot; ${formatDistance(distanceToUser(sauna))}` : ''}</div>
           <div class="sauna-card-meta">
+            ${openNowTag(sauna.hours)}
             <span class="tag">${TYPE_LABELS[sauna.type] || sauna.type}</span>
             <span class="tag">${sauna.price}</span>
             ${sauna.nude ? '<span class="tag tag-nude">DICKS OUT</span>' : ''}
@@ -575,7 +714,7 @@ function openDetail(id) {
       </div>
       <div class="detail-info-row">
         <span class="detail-info-label">Hours</span>
-        <span class="detail-info-value">${sauna.hours}</span>
+        <span class="detail-info-value">${openNowTag(sauna.hours)} ${sauna.hours}</span>
       </div>
       <div class="detail-info-row">
         <span class="detail-info-label">Price</span>
@@ -920,6 +1059,10 @@ function applyFilters() {
     if (wishlist === 'wishlist' && !profile.wishlist[s.id]) return false;
     if (wishlist === 'visited' && !profile.ratings[s.id]) return false;
     if (wishlist === 'community' && !s.communityAdded) return false;
+    // Map bounds filter
+    if (mapBoundsFilter && s.lat != null && s.lng != null) {
+      if (!mapBoundsFilter.contains(L.latLng(s.lat, s.lng))) return false;
+    }
     return true;
   });
 
@@ -1042,6 +1185,8 @@ function setupListeners() {
     document.getElementById('filter-gender').value = 'all';
     document.getElementById('filter-aufguss').value = 'all';
     document.getElementById('filter-wishlist').value = 'all';
+    mapBoundsFilter = null;
+    if (searchAreaBtn) searchAreaBtn.style.display = 'none';
     updateFilterBadge();
     refreshAll();
   });

@@ -1419,12 +1419,62 @@ a { color: var(--accent); }
   font-weight: 500;
 }
 
+/* ── Open/Closed tags ────────────────────────── */
+.tag-open {
+  background: #e4f0e4;
+  color: #2d6b2d;
+  border-color: #90c490;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.tag-closed {
+  background: #f0e4e4;
+  color: #8b3a3a;
+  border-color: #c4a0a0;
+  font-weight: 500;
+}
+
+/* ── Sauna count badge ───────────────────────── */
+.sauna-count {
+  padding: 6px 20px;
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+/* ── Search this area button ─────────────────── */
+.search-area-btn {
+  padding: 6px 14px;
+  background: var(--card);
+  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(59,47,32,0.15);
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.search-area-btn:hover {
+  background: var(--hover);
+  border-color: var(--warm);
+}
+
 /* ── Utilities ───────────────────────────────── */
 .hidden { display: none !important; }
 
 /* ── Responsive ──────────────────────────────── */
 @media (max-width: 768px) {
   body { flex-direction: column; }
+
+  :root { --sidebar-w: 100%; }
 
   #sidebar {
     width: 100%;
@@ -1436,12 +1486,52 @@ a { color: var(--accent); }
 
   #map { height: 55vh; }
 
+  /* Bottom-sheet style detail panel */
   .detail-panel {
     left: 0;
+    top: auto;
+    bottom: 0;
     width: 100%;
-    height: 100vh;
-    box-shadow: none;
+    height: 85vh;
+    box-shadow: 0 -4px 24px rgba(59,47,32,0.15);
+    border-radius: 16px 16px 0 0;
+    transform: translateY(20px);
   }
 
-  :root { --sidebar-w: 100%; }
+  .detail-panel.visible {
+    transform: translateY(0);
+  }
+
+  /* Drag handle indicator */
+  .detail-panel::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 8px auto 0;
+  }
+
+  /* Larger touch targets on mobile */
+  .sauna-card { padding: 14px 20px; min-height: 60px; }
+  .sauna-card-name { font-size: 14px; }
+
+  .controls-top-row select { padding: 8px 10px; font-size: 13px; }
+  .filter-toggle-btn { padding: 8px 12px; font-size: 13px; }
+
+  #search { padding: 10px 14px; font-size: 14px; }
+
+  .btn { padding: 12px; font-size: 14px; }
+  .btn-icon { width: 36px; height: 36px; font-size: 18px; }
+
+  /* Stack filter drawer full-width */
+  .filter-drawer-grid { grid-template-columns: 1fr; }
+  .filter-drawer select { padding: 8px 10px; font-size: 13px; }
+
+  /* Modal full-width on mobile */
+  .modal-content { width: 95%; max-height: 90vh; padding: 20px; }
+
+  /* Search area button sizing */
+  .search-area-btn { padding: 8px 16px; font-size: 13px; }
 }

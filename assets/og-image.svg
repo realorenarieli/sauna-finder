@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#f6f1ea"/>
+  <rect x="0" y="580" width="1200" height="50" fill="#6b5234"/>
+  <text x="600" y="260" text-anchor="middle" font-family="Georgia, serif" font-size="72" font-weight="700" fill="#6b5234">Sauna Finder</text>
+  <text x="600" y="330" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="28" fill="#a89880">Finnish public sauna is the gold standard</text>
+  <text x="600" y="420" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="22" fill="#7a6b59">265+ saunas worldwide &middot; Scored by Finnish affinity</text>
+  <!-- Steam wisps -->
+  <g opacity="0.15" fill="#c9a96e">
+    <ellipse cx="380" cy="180" rx="8" ry="40"/>
+    <ellipse cx="400" cy="190" rx="6" ry="30"/>
+    <ellipse cx="420" cy="175" rx="7" ry="35"/>
+    <ellipse cx="780" cy="180" rx="8" ry="40"/>
+    <ellipse cx="800" cy="190" rx="6" ry="30"/>
+    <ellipse cx="820" cy="175" rx="7" ry="35"/>
+  </g>
+</svg>

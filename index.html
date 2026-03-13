@@ -2,8 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Sauna Finder</title>
+  <meta name="description" content="Find the best saunas worldwide, ranked by Finnish public sauna affinity. Wood-fired, smoke, electric, banya and more.">
+  <meta property="og:title" content="Sauna Finder">
+  <meta property="og:description" content="Find the best saunas worldwide, ranked by Finnish public sauna affinity. Wood-fired, smoke, electric, banya and more.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://orearieli.github.io/sauna-finder/assets/og-image.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Sauna Finder">
+  <meta name="twitter:description" content="Find the best saunas worldwide, ranked by Finnish public sauna affinity.">
+  <meta name="twitter:image" content="https://orearieli.github.io/sauna-finder/assets/og-image.svg">
+  <meta name="theme-color" content="#6b5234">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
@@ -120,6 +130,7 @@
       </div>
     </div>
 
+    <div id="sauna-count" class="sauna-count"></div>
     <div id="sauna-list" class="sauna-list"></div>
   </aside>
 
