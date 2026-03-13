@@ -636,6 +636,121 @@ async function handleExtract(request, env, origin) {
   }
 }
 
+// ── Crowdsourced Confirmations ───────────────
+// Stored inline in sauna KV objects under `crowd` field:
+// crowd: { confirmHours: [], confirmPrice: [], corrections: [], closedReports: [], confirmOpen: [] }
+// Each entry: { ip, ts }
+// When closedReports.length >= 3 (unique IPs), sauna.mayClosed = true
+// confirmOpen entries can counter closedReports
+
+const CROWD_ACTIONS = ['confirmHours', 'confirmPrice', 'correctHours', 'correctPrice', 'reportClosed', 'confirmOpen'];
+const CLOSED_THRESHOLD = 3;
+
+async function handleConfirm(request, env, origin) {
+  if (request.method !== 'POST') {
+    return Response.json({ error: 'Method not allowed' }, { status: 405, headers: corsHeaders(origin) });
+  }
+
+  const body = await request.json();
+  const { saunaId, action, value } = body;
+
+  if (!saunaId || !CROWD_ACTIONS.includes(action)) {
+    return Response.json({ error: 'saunaId and valid action required' }, { status: 400, headers: corsHeaders(origin) });
+  }
+
+  // Rate limit: 20 confirmations per IP per hour
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const rlKv = env.RATE_LIMITS;
+  if (rlKv) {
+    const now = Math.floor(Date.now() / 3600000);
+    const key = `confirm:${ip}:${now}`;
+    const count = parseInt(await rlKv.get(key) || '0', 10);
+    if (count >= 20) {
+      return Response.json({ error: 'Too many confirmations. Try again later.' }, { status: 429, headers: corsHeaders(origin) });
+    }
+    await rlKv.put(key, String(count + 1), { expirationTtl: 3600 });
+  }
+
+  const kv = env.COMMUNITY_SAUNAS;
+  const saunaStr = await kv.get(`sauna:${saunaId}`);
+  if (!saunaStr) {
+    return Response.json({ error: 'Sauna not found' }, { status: 404, headers: corsHeaders(origin) });
+  }
+
+  const sauna = JSON.parse(saunaStr);
+  if (!sauna.crowd) {
+    sauna.crowd = { confirmHours: [], confirmPrice: [], corrections: [], closedReports: [], confirmOpen: [] };
+  }
+
+  const ts = new Date().toISOString();
+  const entry = { ip, ts };
+
+  switch (action) {
+    case 'confirmHours': {
+      // Dedupe by IP
+      if (!sauna.crowd.confirmHours.some(e => e.ip === ip)) {
+        sauna.crowd.confirmHours.push(entry);
+      }
+      break;
+    }
+    case 'confirmPrice': {
+      if (!sauna.crowd.confirmPrice.some(e => e.ip === ip)) {
+        sauna.crowd.confirmPrice.push(entry);
+      }
+      break;
+    }
+    case 'correctHours': {
+      if (!value || typeof value !== 'string') {
+        return Response.json({ error: 'value required for correctHours' }, { status: 400, headers: corsHeaders(origin) });
+      }
+      sauna.crowd.corrections.push({ ...entry, field: 'hours', value: value.slice(0, 200) });
+      break;
+    }
+    case 'correctPrice': {
+      if (!value || typeof value !== 'string') {
+        return Response.json({ error: 'value required for correctPrice' }, { status: 400, headers: corsHeaders(origin) });
+      }
+      sauna.crowd.corrections.push({ ...entry, field: 'price', value: value.slice(0, 100) });
+      break;
+    }
+    case 'reportClosed': {
+      if (!sauna.crowd.closedReports.some(e => e.ip === ip)) {
+        sauna.crowd.closedReports.push(entry);
+      }
+      // Check threshold
+      const uniqueClosedIps = new Set(sauna.crowd.closedReports.map(e => e.ip));
+      const uniqueOpenIps = new Set(sauna.crowd.confirmOpen.map(e => e.ip));
+      sauna.mayClosed = uniqueClosedIps.size - uniqueOpenIps.size >= CLOSED_THRESHOLD;
+      break;
+    }
+    case 'confirmOpen': {
+      if (!sauna.crowd.confirmOpen.some(e => e.ip === ip)) {
+        sauna.crowd.confirmOpen.push(entry);
+      }
+      const uniqueClosedIps2 = new Set(sauna.crowd.closedReports.map(e => e.ip));
+      const uniqueOpenIps2 = new Set(sauna.crowd.confirmOpen.map(e => e.ip));
+      sauna.mayClosed = uniqueClosedIps2.size - uniqueOpenIps2.size >= CLOSED_THRESHOLD;
+      break;
+    }
+  }
+
+  sauna.crowd.lastUpdated = ts;
+  await kv.put(`sauna:${saunaId}`, JSON.stringify(sauna));
+  saunasCache = null;
+
+  return Response.json({
+    ok: true,
+    crowd: {
+      confirmHours: sauna.crowd.confirmHours.length,
+      confirmPrice: sauna.crowd.confirmPrice.length,
+      corrections: sauna.crowd.corrections.length,
+      closedReports: sauna.crowd.closedReports.length,
+      confirmOpen: sauna.crowd.confirmOpen.length,
+      mayClosed: !!sauna.mayClosed,
+    },
+  }, { headers: corsHeaders(origin) });
+}
+
 // ── Main Handler ────────────────────────────
 export default {
   async fetch(request, env) {
@@ -652,6 +767,10 @@ export default {
 
     if (url.pathname === '/saunas') {
       return handleSaunas(request, env, origin);
+    }
+
+    if (url.pathname === '/saunas/confirm') {
+      return handleConfirm(request, env, origin);
     }
 
     if (url.pathname === '/edits') {

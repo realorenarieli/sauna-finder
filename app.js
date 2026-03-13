@@ -95,6 +95,7 @@ let mapBoundsFilter = null; // L.LatLngBounds or null
 let searchAreaBtn = null;
 let mapInteracted = false;
 let mapViewBeforeDetail = null; // { center, zoom } saved before opening detail
+let _syncingFilters = false; // guard to prevent chip<->dropdown feedback loop
 
 // ── Profile (localStorage) ───────────────────
 function loadProfile() {
@@ -844,6 +845,10 @@ function openDetail(id) {
 
   const content = document.getElementById('detail-content');
   content.innerHTML = `
+    ${sauna.mayClosed ? `<div class="closed-banner">
+      <span class="closed-banner-icon">&#9888;</span>
+      <div class="closed-banner-text"><strong>May be permanently closed.</strong> Multiple users have reported this sauna as closed. If you've visited recently and it's open, click "Still Open" below.</div>
+    </div>` : ''}
     <div class="detail-header">
       <div class="detail-name">${sauna.name}</div>
       <div class="detail-location">${sauna.city}, ${sauna.country}</div>
@@ -962,6 +967,44 @@ function openDetail(id) {
     </div>
     ${isVisited ? `<button class="link-btn" onclick="removeRating('${sauna.id}')">Remove visit</button>` : ''}
     ${sauna.communityAdded ? `<button class="link-btn link-btn-danger" onclick="deleteUserSauna('${sauna.id}')">Delete this sauna</button>` : ''}
+
+    <div class="detail-section crowd-section">
+      <h3>Help Keep Info Accurate</h3>
+      <div class="crowd-row">
+        <span class="crowd-label">Hours are correct</span>
+        <span class="crowd-count" id="crowd-hours-count">${sauna.crowd?.confirmHours?.length || 0}</span>
+        <button class="crowd-btn" id="crowd-confirm-hours" onclick="crowdConfirm('${sauna.id}', 'confirmHours')">Confirm</button>
+      </div>
+      <div class="crowd-row">
+        <span class="crowd-label">Price is correct</span>
+        <span class="crowd-count" id="crowd-price-count">${sauna.crowd?.confirmPrice?.length || 0}</span>
+        <button class="crowd-btn" id="crowd-confirm-price" onclick="crowdConfirm('${sauna.id}', 'confirmPrice')">Confirm</button>
+      </div>
+      <div class="crowd-row">
+        <span class="crowd-label">Suggest different hours</span>
+        <button class="crowd-btn" id="crowd-correct-hours-btn" onclick="toggleCrowdCorrect('hours')">Correct</button>
+      </div>
+      <div class="crowd-correct-input hidden" id="crowd-correct-hours">
+        <input type="text" placeholder="e.g. Mon-Fri 14-21" id="crowd-hours-input" />
+        <button class="crowd-btn" onclick="crowdCorrect('${sauna.id}', 'correctHours')">Send</button>
+      </div>
+      <div class="crowd-row">
+        <span class="crowd-label">Suggest different price</span>
+        <button class="crowd-btn" id="crowd-correct-price-btn" onclick="toggleCrowdCorrect('price')">Correct</button>
+      </div>
+      <div class="crowd-correct-input hidden" id="crowd-correct-price">
+        <input type="text" placeholder="e.g. 15 EUR" id="crowd-price-input" />
+        <button class="crowd-btn" onclick="crowdCorrect('${sauna.id}', 'correctPrice')">Send</button>
+      </div>
+      <div class="crowd-row" style="margin-top:6px">
+        ${sauna.mayClosed
+          ? `<span class="crowd-label">This sauna is actually open</span>
+             <button class="crowd-btn" onclick="crowdConfirm('${sauna.id}', 'confirmOpen')">Still Open</button>`
+          : `<span class="crowd-label">Report permanently closed</span>
+             <button class="crowd-btn crowd-btn-danger" onclick="crowdConfirm('${sauna.id}', 'reportClosed')">Report Closed</button>`
+        }
+      </div>
+    </div>
   `;
 
   // Similar sauna click handlers
@@ -1010,6 +1053,80 @@ function closeDetail() {
   applyFilters();
   renderMarkers();
   renderList();
+}
+
+// ── Crowdsource Confirmations ─────────────────
+function toggleCrowdCorrect(field) {
+  const el = document.getElementById(`crowd-correct-${field}`);
+  el.classList.toggle('hidden');
+  if (!el.classList.contains('hidden')) {
+    el.querySelector('input').focus();
+  }
+}
+
+async function crowdConfirm(saunaId, action) {
+  try {
+    const res = await fetch(`${WORKER_URL}/saunas/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ saunaId, action }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Failed to submit');
+      return;
+    }
+    // Update local sauna data
+    const sauna = saunas.find(s => s.id === saunaId);
+    if (sauna && data.crowd) {
+      if (!sauna.crowd) sauna.crowd = {};
+      sauna.crowd.confirmHours = Array(data.crowd.confirmHours).fill({});
+      sauna.crowd.confirmPrice = Array(data.crowd.confirmPrice).fill({});
+      sauna.mayClosed = data.crowd.mayClosed;
+    }
+    // Visual feedback
+    if (action === 'confirmHours') {
+      const btn = document.getElementById('crowd-confirm-hours');
+      if (btn) { btn.classList.add('confirmed'); btn.textContent = 'Confirmed'; }
+      const cnt = document.getElementById('crowd-hours-count');
+      if (cnt) cnt.textContent = data.crowd.confirmHours;
+    } else if (action === 'confirmPrice') {
+      const btn = document.getElementById('crowd-confirm-price');
+      if (btn) { btn.classList.add('confirmed'); btn.textContent = 'Confirmed'; }
+      const cnt = document.getElementById('crowd-price-count');
+      if (cnt) cnt.textContent = data.crowd.confirmPrice;
+    } else if (action === 'reportClosed' || action === 'confirmOpen') {
+      openDetail(saunaId);
+    }
+  } catch (e) {
+    alert('Network error — try again');
+  }
+}
+
+async function crowdCorrect(saunaId, action) {
+  const field = action === 'correctHours' ? 'hours' : 'price';
+  const input = document.getElementById(`crowd-${field}-input`);
+  const value = input.value.trim();
+  if (!value) return;
+
+  try {
+    const res = await fetch(`${WORKER_URL}/saunas/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ saunaId, action, value }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Failed to submit');
+      return;
+    }
+    input.value = '';
+    document.getElementById(`crowd-correct-${field}`).classList.add('hidden');
+    const btn = document.getElementById(`crowd-correct-${field}-btn`);
+    if (btn) { btn.classList.add('confirmed'); btn.textContent = 'Sent'; }
+  } catch (e) {
+    alert('Network error — try again');
+  }
 }
 
 // ── Rating ───────────────────────────────────
@@ -1218,6 +1335,13 @@ function renderRecommendations() {
 }
 
 // ── Filtering & Sorting ──────────────────────
+function parsePriceRange(priceStr) {
+  if (!priceStr) return null;
+  if (priceStr.toLowerCase() === 'free') return 0;
+  const match = priceStr.match(/[\d.]+/);
+  return match ? parseFloat(match[0]) : null;
+}
+
 function applyFilters() {
   const search = document.getElementById('search').value.toLowerCase();
   const type = document.getElementById('filter-type').value;
@@ -1226,6 +1350,11 @@ function applyFilters() {
   const gender = document.getElementById('filter-gender').value;
   const openFilter = document.getElementById('filter-open').value;
   const wishlist = document.getElementById('filter-wishlist').value;
+
+  // Range filters
+  const priceMin = parseInt(document.getElementById('price-min').value, 10);
+  const priceMax = parseInt(document.getElementById('price-max').value, 10);
+  const minScore = parseInt(document.getElementById('min-score').value, 10);
 
   filteredSaunas = saunas.filter(s => {
     if (search && !s.name.toLowerCase().includes(search) && !s.city.toLowerCase().includes(search) && !s.country.toLowerCase().includes(search)) return false;
@@ -1239,6 +1368,16 @@ function applyFilters() {
     if (wishlist === 'visited' && !profile.ratings[s.id]) return false;
     if (wishlist === 'community' && !s.communityAdded) return false;
     if (wishlist === 'aufguss' && !s.aufguss) return false;
+    // Price range filter
+    if (priceMin > 0 || priceMax < 100) {
+      const p = parsePriceRange(s.price);
+      if (p !== null) {
+        if (priceMin > 0 && p < priceMin) return false;
+        if (priceMax < 100 && p > priceMax) return false;
+      }
+    }
+    // Min score filter
+    if (minScore > 0 && finnishScore(s) < minScore) return false;
     // Map bounds filter
     if (mapBoundsFilter && s.lat != null && s.lng != null) {
       if (!mapBoundsFilter.contains(L.latLng(s.lat, s.lng))) return false;
@@ -1282,6 +1421,9 @@ function updateFilterBadge() {
     document.getElementById('filter-gender').value !== 'all',
     document.getElementById('filter-open').value !== 'all',
     document.getElementById('filter-wishlist').value !== 'all',
+    parseInt(document.getElementById('price-min').value, 10) > 0,
+    parseInt(document.getElementById('price-max').value, 10) < 100,
+    parseInt(document.getElementById('min-score').value, 10) > 0,
   ].filter(Boolean).length;
 
   const badge = document.getElementById('filter-badge');
@@ -1293,8 +1435,153 @@ function updateFilterBadge() {
   } else {
     badge.classList.add('hidden');
     btn.classList.remove('active');
-    // Collapse drawer if no active filters and it's open
   }
+
+  renderActivePills();
+}
+
+// ── Active Filter Pills ─────────────────────
+function renderActivePills() {
+  const container = document.getElementById('active-pills');
+  const pills = [];
+
+  const add = (label, clearFn) => pills.push({ label, clearFn });
+
+  const type = document.getElementById('filter-type');
+  if (type.value !== 'all') add(type.options[type.selectedIndex].text, () => { type.value = 'all'; });
+
+  const country = document.getElementById('filter-country');
+  if (country.value !== 'all') add(country.options[country.selectedIndex].text, () => { country.value = 'all'; });
+
+  const nude = document.getElementById('filter-nude');
+  if (nude.value !== 'all') add(nude.options[nude.selectedIndex].text, () => { nude.value = 'all'; });
+
+  const gender = document.getElementById('filter-gender');
+  if (gender.value !== 'all') add(gender.options[gender.selectedIndex].text, () => { gender.value = 'all'; });
+
+  const open = document.getElementById('filter-open');
+  if (open.value !== 'all') add('Open Now', () => { open.value = 'all'; });
+
+  const wishlist = document.getElementById('filter-wishlist');
+  if (wishlist.value !== 'all') add(wishlist.options[wishlist.selectedIndex].text, () => { wishlist.value = 'all'; });
+
+  const priceMin = document.getElementById('price-min');
+  const priceMax = document.getElementById('price-max');
+  if (parseInt(priceMin.value, 10) > 0 || parseInt(priceMax.value, 10) < 100) {
+    add(`Price ${priceMin.value}-${priceMax.value}`, () => { priceMin.value = 0; priceMax.value = 100; updatePriceLabels(); });
+  }
+
+  const minScore = document.getElementById('min-score');
+  if (parseInt(minScore.value, 10) > 0) {
+    add(`Score ${minScore.value}+`, () => { minScore.value = 0; updateScoreLabel(); });
+  }
+
+  container.innerHTML = pills.map((p, i) => `<span class="pill">${p.label}<button class="pill-dismiss" data-pill="${i}">&times;</button></span>`).join('');
+
+  container.querySelectorAll('.pill-dismiss').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const idx = parseInt(btn.dataset.pill, 10);
+      pills[idx].clearFn();
+      syncChipsFromFilters();
+      updateFilterBadge();
+      clearBoundsAndRefresh();
+    });
+  });
+}
+
+// ── Price/Score label helpers ─────────────────
+function updatePriceLabels() {
+  const min = parseInt(document.getElementById('price-min').value, 10);
+  const max = parseInt(document.getElementById('price-max').value, 10);
+  document.getElementById('price-min-label').textContent = min === 0 ? 'Free' : `${min}`;
+  document.getElementById('price-max-label').textContent = max >= 100 ? 'Any' : `${max}`;
+  // Update track fill
+  const track = document.getElementById('price-track');
+  track.style.background = `linear-gradient(to right, var(--border) ${min}%, var(--accent) ${min}%, var(--accent) ${max}%, var(--border) ${max}%)`;
+}
+
+function updateScoreLabel() {
+  const val = parseInt(document.getElementById('min-score').value, 10);
+  document.getElementById('min-score-label').textContent = val === 0 ? 'Any' : `${val}+`;
+}
+
+// ── Chip <-> Filter sync ────────────────────
+function syncChipsFromFilters() {
+  if (_syncingFilters) return;
+  _syncingFilters = true;
+
+  const type = document.getElementById('filter-type').value;
+  const nude = document.getElementById('filter-nude').value;
+  const open = document.getElementById('filter-open').value;
+  const wishlist = document.getElementById('filter-wishlist').value;
+  const priceMin = parseInt(document.getElementById('price-min').value, 10);
+  const minScore = parseInt(document.getElementById('min-score').value, 10);
+
+  document.querySelectorAll('.chip').forEach(chip => {
+    const key = chip.dataset.chip;
+    let active = false;
+    if (key === 'wood-fired') active = type === 'wood-fired';
+    else if (key === 'nude') active = nude === 'nude';
+    else if (key === 'aufguss') active = wishlist === 'aufguss';
+    else if (key === 'open') active = open === 'open';
+    else if (key === 'free') active = priceMin === 0 && parseInt(document.getElementById('price-max').value, 10) === 0;
+    else if (key === 'score70') active = minScore >= 70;
+    chip.classList.toggle('active', active);
+  });
+
+  _syncingFilters = false;
+}
+
+function applyChip(chipKey) {
+  if (_syncingFilters) return;
+  _syncingFilters = true;
+
+  const chip = document.querySelector(`.chip[data-chip="${chipKey}"]`);
+  const isActive = chip.classList.contains('active');
+
+  switch (chipKey) {
+    case 'wood-fired':
+      document.getElementById('filter-type').value = isActive ? 'all' : 'wood-fired';
+      break;
+    case 'nude':
+      document.getElementById('filter-nude').value = isActive ? 'all' : 'nude';
+      break;
+    case 'aufguss':
+      document.getElementById('filter-wishlist').value = isActive ? 'all' : 'aufguss';
+      break;
+    case 'open':
+      document.getElementById('filter-open').value = isActive ? 'all' : 'open';
+      break;
+    case 'free': {
+      const pm = document.getElementById('price-min');
+      const px = document.getElementById('price-max');
+      if (isActive) { pm.value = 0; px.value = 100; }
+      else { pm.value = 0; px.value = 0; }
+      updatePriceLabels();
+      break;
+    }
+    case 'score70': {
+      const ms = document.getElementById('min-score');
+      ms.value = isActive ? 0 : 70;
+      updateScoreLabel();
+      break;
+    }
+  }
+
+  _syncingFilters = false;
+  syncChipsFromFilters();
+  updateFilterBadge();
+  mapBoundsFilter = null;
+  if (searchAreaBtn) searchAreaBtn.style.display = 'none';
+  refreshAll();
+}
+
+function clearBoundsAndRefresh(fitMap = false) {
+  mapBoundsFilter = null;
+  if (searchAreaBtn) searchAreaBtn.style.display = 'none';
+  updateFilterBadge();
+  refreshAll(fitMap);
 }
 
 // ── Country filter population ────────────────
@@ -1362,18 +1649,55 @@ function setupListeners() {
   }, 150);
   document.getElementById('search').addEventListener('input', debouncedSearch);
   document.getElementById('sort-by').addEventListener('change', refreshAll);
-  const clearBoundsAndRefresh = (fitMap = false) => {
-    mapBoundsFilter = null;
-    if (searchAreaBtn) searchAreaBtn.style.display = 'none';
+
+  // Dropdown filter changes
+  ['filter-type', 'filter-nude', 'filter-gender', 'filter-open', 'filter-wishlist'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => {
+      syncChipsFromFilters();
+      clearBoundsAndRefresh();
+    });
+  });
+  document.getElementById('filter-country').addEventListener('change', () => {
+    syncChipsFromFilters();
+    clearBoundsAndRefresh(true);
+  });
+
+  // Quick filter chips
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => applyChip(chip.dataset.chip));
+  });
+
+  // Price range sliders
+  const priceMin = document.getElementById('price-min');
+  const priceMax = document.getElementById('price-max');
+  const debouncedPriceRefresh = debounce(() => {
+    syncChipsFromFilters();
     updateFilterBadge();
-    refreshAll(fitMap);
-  };
-  document.getElementById('filter-type').addEventListener('change', () => clearBoundsAndRefresh());
-  document.getElementById('filter-nude').addEventListener('change', () => clearBoundsAndRefresh());
-  document.getElementById('filter-gender').addEventListener('change', () => clearBoundsAndRefresh());
-  document.getElementById('filter-open').addEventListener('change', () => clearBoundsAndRefresh());
-  document.getElementById('filter-wishlist').addEventListener('change', () => clearBoundsAndRefresh());
-  document.getElementById('filter-country').addEventListener('change', () => clearBoundsAndRefresh(true));
+    refreshAll();
+  }, 200);
+  priceMin.addEventListener('input', () => {
+    if (parseInt(priceMin.value, 10) > parseInt(priceMax.value, 10)) priceMax.value = priceMin.value;
+    updatePriceLabels();
+    debouncedPriceRefresh();
+  });
+  priceMax.addEventListener('input', () => {
+    if (parseInt(priceMax.value, 10) < parseInt(priceMin.value, 10)) priceMin.value = priceMax.value;
+    updatePriceLabels();
+    debouncedPriceRefresh();
+  });
+  updatePriceLabels();
+
+  // Min score slider
+  const minScoreEl = document.getElementById('min-score');
+  const debouncedScoreRefresh = debounce(() => {
+    syncChipsFromFilters();
+    updateFilterBadge();
+    refreshAll();
+  }, 200);
+  minScoreEl.addEventListener('input', () => {
+    updateScoreLabel();
+    debouncedScoreRefresh();
+  });
 
   // Filter drawer toggle
   document.getElementById('filter-toggle').addEventListener('click', () => {
@@ -1398,6 +1722,12 @@ function setupListeners() {
     document.getElementById('filter-gender').value = 'all';
     document.getElementById('filter-open').value = 'all';
     document.getElementById('filter-wishlist').value = 'all';
+    document.getElementById('price-min').value = 0;
+    document.getElementById('price-max').value = 100;
+    document.getElementById('min-score').value = 0;
+    updatePriceLabels();
+    updateScoreLabel();
+    syncChipsFromFilters();
     mapBoundsFilter = null;
     if (searchAreaBtn) searchAreaBtn.style.display = 'none';
     updateFilterBadge();

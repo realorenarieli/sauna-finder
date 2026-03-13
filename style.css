@@ -211,10 +211,154 @@ a { color: var(--accent); }
   color: #fff;
 }
 
+/* ── Quick Filter Chips ────────────────────────── */
+.quick-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 0 0 6px;
+}
+
+.chip {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--card);
+  color: var(--text-2);
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.chip.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* ── Active Filter Pills ─────────────────────── */
+.active-pills {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  min-height: 0;
+}
+.active-pills:empty { display: none; }
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: var(--warm-light);
+  color: var(--accent);
+  border-radius: 12px;
+  font-size: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.pill-dismiss {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.6;
+}
+.pill-dismiss:hover { opacity: 1; }
+
+/* ── Range Sliders ───────────────────────────── */
+.filter-range-group {
+  padding: 6px 0 2px;
+}
+
+.range-slider-wrap {
+  position: relative;
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+
+.range-track {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.range-track::after {
+  content: '';
+  position: absolute;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.range-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  width: 100%;
+  height: 28px;
+  background: none;
+  pointer-events: none;
+  outline: none;
+}
+.range-thumb::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  cursor: pointer;
+  pointer-events: auto;
+}
+.range-thumb::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.score-slider-wrap {
+  padding: 4px 0;
+}
+.score-slider-wrap input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.range-values {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  padding-top: 2px;
+}
+
 /* ── Filter drawer (collapsible) ─────────────── */
 .filter-drawer {
   overflow: hidden;
-  max-height: 300px;
+  max-height: 500px;
   opacity: 1;
   transition: max-height 0.25s ease, opacity 0.2s ease, margin 0.25s ease;
   margin-top: 0;
@@ -1557,6 +1701,95 @@ a { color: var(--accent); }
 .edit-status.error { color: #8b3a3a; }
 .edit-status.success { color: #3a6b3a; }
 .edit-status.loading { color: var(--warm); }
+
+/* ── Crowdsource Confirm UI ───────────────────── */
+.crowd-section {
+  padding: 12px 0 0;
+  border-top: 1px solid var(--border);
+}
+.crowd-section h3 {
+  font-size: 13px;
+  color: var(--text-2);
+  margin-bottom: 8px;
+}
+.crowd-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.crowd-row .crowd-label {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.crowd-count {
+  font-size: 11px;
+  color: var(--text-3);
+  min-width: 28px;
+  text-align: right;
+}
+.crowd-btn {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--accent);
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.crowd-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.crowd-btn.confirmed {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  pointer-events: none;
+}
+.crowd-btn-danger {
+  color: #8b3a3a;
+  border-color: #d4a0a0;
+}
+.crowd-btn-danger:hover { background: #8b3a3a; color: #fff; border-color: #8b3a3a; }
+.crowd-btn-danger.confirmed { background: #8b3a3a; color: #fff; border-color: #8b3a3a; }
+
+.crowd-correct-input {
+  display: flex;
+  gap: 6px;
+  padding: 4px 0;
+}
+.crowd-correct-input input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+}
+.crowd-correct-input input:focus { border-color: var(--accent); }
+
+/* ── Closed Warning Banner ───────────────────── */
+.closed-banner {
+  background: #f9ede0;
+  border: 1px solid #d4a060;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.closed-banner-icon { font-size: 18px; }
+.closed-banner-text {
+  flex: 1;
+  font-size: 12px;
+  color: #8b5e2a;
+  line-height: 1.4;
+}
+.closed-banner-text strong { color: #6b3e1a; }
 
 .disclaimer {
   position: fixed;

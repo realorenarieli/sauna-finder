@@ -43,6 +43,16 @@
 
     <div class="controls">
       <input type="text" id="search" placeholder="Search saunas..." />
+      <!-- Quick Filter Chips -->
+      <div class="quick-chips" id="quick-chips">
+        <button class="chip" data-chip="wood-fired">Wood-fired</button>
+        <button class="chip" data-chip="nude">Nude</button>
+        <button class="chip" data-chip="aufguss">Aufguss</button>
+        <button class="chip" data-chip="open">Open Now</button>
+        <button class="chip" data-chip="free">Free</button>
+        <button class="chip" data-chip="score70">Score 70+</button>
+      </div>
+
       <div class="controls-top-row">
         <select id="sort-by">
           <option value="finnish">Finnish Affinity</option>
@@ -56,6 +66,10 @@
           <span class="filter-icon">&#9776;</span> Filters <span id="filter-badge" class="filter-badge hidden">0</span>
         </button>
       </div>
+
+      <!-- Active Filter Pills -->
+      <div class="active-pills" id="active-pills"></div>
+
       <div id="filter-drawer" class="filter-drawer collapsed">
         <div class="filter-drawer-grid">
           <div class="filter-group">
@@ -111,6 +125,27 @@
             </select>
           </div>
         </div>
+
+        <!-- Price Range Slider -->
+        <div class="filter-range-group">
+          <label class="filter-label">Price Range</label>
+          <div class="range-slider-wrap">
+            <div class="range-track" id="price-track"></div>
+            <input type="range" id="price-min" class="range-thumb" min="0" max="100" value="0" />
+            <input type="range" id="price-max" class="range-thumb" min="0" max="100" value="100" />
+          </div>
+          <div class="range-values"><span id="price-min-label">Free</span> &mdash; <span id="price-max-label">Any</span></div>
+        </div>
+
+        <!-- Min Score Slider -->
+        <div class="filter-range-group">
+          <label class="filter-label">Min Finnish Score</label>
+          <div class="score-slider-wrap">
+            <input type="range" id="min-score" min="0" max="100" value="0" />
+          </div>
+          <div class="range-values"><span id="min-score-label">Any</span></div>
+        </div>
+
         <button id="filter-clear" class="filter-clear-btn">Clear All Filters</button>
       </div>
     </div>
