@@ -94,6 +94,7 @@ let userLocation = null; // { lat, lng } from geolocation
 let mapBoundsFilter = null; // L.LatLngBounds or null
 let searchAreaBtn = null;
 let mapInteracted = false;
+let mapViewBeforeDetail = null; // { center, zoom } saved before opening detail
 
 // ── Profile (localStorage) ───────────────────
 function loadProfile() {
@@ -468,6 +469,23 @@ function initMap() {
   });
   new MarkerToggle().addTo(map);
 
+  // "Show all" / fit bounds control
+  const ShowAllControl = L.Control.extend({
+    options: { position: 'topright' },
+    onAdd() {
+      const btn = L.DomUtil.create('div', 'leaflet-bar locate-btn');
+      btn.innerHTML = '<button title="Show all saunas" class="locate-button" style="font-size:16px">⊞</button>';
+      btn.style.cursor = 'pointer';
+      L.DomEvent.disableClickPropagation(btn);
+      btn.querySelector('button').addEventListener('click', () => {
+        if (selectedId) closeDetail();
+        fitMapToSaunas();
+      });
+      return btn;
+    },
+  });
+  new ShowAllControl().addTo(map);
+
   // "Search this area" control
   const AreaSearch = L.Control.extend({
     options: { position: 'topleft' },
@@ -670,8 +688,13 @@ function openDetail(id) {
   if (!sauna) return;
   selectedId = id;
 
-  // Update URL hash for deep linking
-  history.replaceState(null, '', `#sauna/${id}`);
+  // Save map view before zooming in
+  if (!selectedId) {
+    mapViewBeforeDetail = { center: map.getCenter(), zoom: map.getZoom() };
+  }
+
+  // Update URL hash for deep linking (pushState so back button works)
+  history.pushState({ sauna: id }, '', `#sauna/${id}`);
 
   const fs = finnishScore(sauna);
   const fy = forYouScore(sauna);
@@ -837,12 +860,19 @@ function openDetail(id) {
   renderList();
 }
 
-function closeDetail() {
+function closeDetail(skipHistory) {
   const panel = document.getElementById('detail-panel');
   panel.classList.remove('visible');
   setTimeout(() => panel.classList.add('hidden'), 200);
   selectedId = null;
-  history.replaceState(null, '', window.location.pathname);
+  if (!skipHistory) {
+    history.pushState(null, '', window.location.pathname);
+  }
+  // Restore previous map view
+  if (mapViewBeforeDetail) {
+    map.flyTo(mapViewBeforeDetail.center, mapViewBeforeDetail.zoom, { duration: 0.6 });
+    mapViewBeforeDetail = null;
+  }
   renderMarkers();
   renderList();
 }
@@ -1153,6 +1183,15 @@ function fitMapToFiltered() {
     return;
   }
   const bounds = L.latLngBounds(withCoords.map(s => [s.lat, s.lng]));
+  map.flyToBounds(bounds, { padding: [40, 40], duration: 0.8 });
+}
+
+function fitMapToSaunas() {
+  const withCoords = saunas.filter(s => s.lat != null && s.lng != null);
+  if (withCoords.length === 0) return;
+  const bounds = L.latLngBounds(withCoords.map(s => [s.lat, s.lng]));
+  mapBoundsFilter = null;
+  if (searchAreaBtn) searchAreaBtn.style.display = 'none';
   map.flyToBounds(bounds, { padding: [40, 40], duration: 0.8 });
 }
 
@@ -1685,7 +1724,19 @@ function handleHashRoute() {
   }
 }
 
-window.addEventListener('hashchange', handleHashRoute);
+// Handle browser back/forward button
+window.addEventListener('popstate', () => {
+  const hash = window.location.hash;
+  const match = hash.match(/^#sauna\/(.+)$/);
+  if (match) {
+    const id = decodeURIComponent(match[1]);
+    if (saunas.find(s => s.id === id)) {
+      openDetail(id);
+    }
+  } else if (selectedId) {
+    closeDetail(true); // skipHistory — popstate already changed the URL
+  }
+});
 
 function copyShareLink(id) {
   const url = `${window.location.origin}${window.location.pathname}#sauna/${id}`;
