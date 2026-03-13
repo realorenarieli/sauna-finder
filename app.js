@@ -866,7 +866,7 @@ function closeDetail(skipHistory) {
   setTimeout(() => panel.classList.add('hidden'), 200);
   selectedId = null;
   if (!skipHistory) {
-    history.pushState(null, '', window.location.pathname);
+    history.replaceState(null, '', window.location.pathname);
   }
   // Restore previous map view
   if (mapViewBeforeDetail) {
