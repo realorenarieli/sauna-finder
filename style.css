@@ -914,6 +914,7 @@ a { color: var(--accent); }
   display: flex;
   gap: 8px;
   margin-bottom: 10px;
+  justify-content: center;
 }
 
 .icon-action {
@@ -1587,6 +1588,7 @@ a { color: var(--accent); }
     box-shadow: 0 -4px 24px rgba(59,47,32,0.15);
     border-radius: 16px 16px 0 0;
     transform: translateY(20px);
+    padding-bottom: 80px;
   }
 
   .detail-panel.visible {
