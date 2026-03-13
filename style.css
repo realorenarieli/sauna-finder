@@ -1117,12 +1117,12 @@ a { color: var(--accent); }
 /* ── Map nav group (Near Me + Show All) ──────── */
 .map-nav-group {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   overflow: hidden;
   border-radius: 4px;
 }
 .map-nav-group .locate-button:not(:last-child) {
-  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
 }
 
 /* ── Locate / Near Me button ──────────────────── */
