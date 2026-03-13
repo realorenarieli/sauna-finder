@@ -814,9 +814,23 @@ function openDetail(id) {
   panel.classList.remove('hidden');
   requestAnimationFrame(() => panel.classList.add('visible'));
 
-  // Fly to marker (skip if no coordinates)
+  // Fly to marker and uncluster it
   if (sauna.lat != null && sauna.lng != null) {
-    map.flyTo([sauna.lat, sauna.lng], Math.max(map.getZoom(), 8), { duration: 0.8 });
+    // Find the marker in the cluster group
+    let targetMarker = null;
+    markerLayer.eachLayer(m => {
+      if (!targetMarker && m.getLatLng().lat === sauna.lat && m.getLatLng().lng === sauna.lng) {
+        targetMarker = m;
+      }
+    });
+    if (targetMarker) {
+      // zoomToShowLayer zooms/spiderfies as needed to reveal the marker
+      markerLayer.zoomToShowLayer(targetMarker, () => {
+        map.panTo(targetMarker.getLatLng(), { animate: true, duration: 0.5 });
+      });
+    } else {
+      map.flyTo([sauna.lat, sauna.lng], Math.max(map.getZoom(), 14), { duration: 0.8 });
+    }
   }
 
   renderMarkers();
