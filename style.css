@@ -1464,6 +1464,13 @@ a { color: var(--accent); }
 .disclaimer strong {
   color: var(--text-2);
 }
+.disclaimer a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.disclaimer a:hover {
+  text-decoration: underline;
+}
 
 /* ── Search this area button ─────────────────── */
 .search-area-btn {
