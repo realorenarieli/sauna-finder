@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sauna-finder-v4';
+const CACHE_NAME = 'sauna-finder-v5';
 const STATIC_ASSETS = [
   './',
   './index.html',

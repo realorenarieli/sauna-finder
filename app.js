@@ -1334,6 +1334,134 @@ function renderRecommendations() {
   });
 }
 
+// ── Multi-select filter component ────────────
+const _ms = {}; // id → { selected: Set, options: [{value,label}], placeholder, el }
+
+function initMultiSelect(id, options, placeholder) {
+  const el = document.getElementById(id);
+  const state = { selected: new Set(), options, placeholder, el };
+  _ms[id] = state;
+
+  el.innerHTML = `<button type="button" class="ms-trigger">${placeholder}</button><div class="ms-dropdown"></div>`;
+  _renderMSOptions(id);
+
+  const trigger = el.querySelector('.ms-trigger');
+  const dropdown = el.querySelector('.ms-dropdown');
+
+  trigger.addEventListener('click', e => {
+    e.stopPropagation();
+    // Close other open dropdowns
+    document.querySelectorAll('.ms-dropdown.open').forEach(d => {
+      if (d !== dropdown) d.classList.remove('open');
+    });
+    dropdown.classList.toggle('open');
+  });
+}
+
+function _renderMSOptions(id) {
+  const state = _ms[id];
+  const dropdown = state.el.querySelector('.ms-dropdown');
+  dropdown.innerHTML = state.options.map(o =>
+    `<label class="ms-option"><input type="checkbox" value="${o.value}" ${state.selected.has(o.value) ? 'checked' : ''}> ${o.label}</label>`
+  ).join('');
+
+  dropdown.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', e => {
+      e.stopPropagation();
+      if (cb.checked) state.selected.add(cb.value);
+      else state.selected.delete(cb.value);
+      _renderMSTrigger(id);
+      state.el.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  });
+}
+
+function _renderMSTrigger(id) {
+  const state = _ms[id];
+  const trigger = state.el.querySelector('.ms-trigger');
+  const n = state.selected.size;
+  if (n === 0) {
+    trigger.textContent = state.placeholder;
+    trigger.classList.remove('has-selection');
+  } else if (n === 1) {
+    const val = [...state.selected][0];
+    const opt = state.options.find(o => o.value === val);
+    trigger.textContent = opt ? opt.label : val;
+    trigger.classList.add('has-selection');
+  } else {
+    trigger.textContent = `${n} selected`;
+    trigger.classList.add('has-selection');
+  }
+}
+
+function getFilterValues(id) {
+  return _ms[id] ? [..._ms[id].selected] : [];
+}
+
+function setFilterValues(id, values) {
+  if (!_ms[id]) return;
+  _ms[id].selected = new Set(values);
+  _renderMSOptions(id);
+  _renderMSTrigger(id);
+}
+
+function toggleFilterValue(id, value) {
+  if (!_ms[id]) return;
+  const s = _ms[id].selected;
+  if (s.has(value)) s.delete(value);
+  else s.add(value);
+  _renderMSOptions(id);
+  _renderMSTrigger(id);
+}
+
+function getFilterLabel(id, value) {
+  if (!_ms[id]) return value;
+  const opt = _ms[id].options.find(o => o.value === value);
+  return opt ? opt.label : value;
+}
+
+function initAllMultiSelects() {
+  initMultiSelect('filter-type', [
+    { value: 'wood-fired', label: 'Wood-fired' },
+    { value: 'smoke', label: 'Smoke' },
+    { value: 'electric', label: 'Electric' },
+    { value: 'russian-banya', label: 'Russian Banya' },
+    { value: 'korean-jjimjilbang', label: 'Jjimjilbang' },
+    { value: 'boat', label: 'Boat' },
+    { value: 'other', label: 'Other' },
+  ], 'All Types');
+
+  initMultiSelect('filter-country', [], 'All Countries');
+
+  initMultiSelect('filter-nude', [
+    { value: 'nude', label: 'Dicks Out Only' },
+    { value: 'clothed', label: 'Clothed Only' },
+  ], 'Any');
+
+  initMultiSelect('filter-gender', [
+    { value: 'mixed', label: 'Mixed Only' },
+    { value: 'segregated', label: 'Segregated Only' },
+  ], 'Any');
+
+  initMultiSelect('filter-open', [
+    { value: 'open', label: 'Open Now' },
+  ], 'Any');
+
+  initMultiSelect('filter-wishlist', [
+    { value: 'wishlist', label: 'Wishlist Only' },
+    { value: 'visited', label: 'Visited Only' },
+    { value: 'community', label: 'Community Added' },
+    { value: 'aufguss', label: 'Aufguss Only' },
+  ], 'All Saunas');
+
+  // Close dropdowns on outside click
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.multi-select')) {
+      document.querySelectorAll('.ms-dropdown.open').forEach(d => d.classList.remove('open'));
+    }
+  });
+}
+
 // ── Filtering & Sorting ──────────────────────
 function parsePriceRange(priceStr) {
   if (!priceStr) return null;
@@ -1344,12 +1472,12 @@ function parsePriceRange(priceStr) {
 
 function applyFilters() {
   const search = document.getElementById('search').value.toLowerCase();
-  const type = document.getElementById('filter-type').value;
-  const country = document.getElementById('filter-country').value;
-  const nude = document.getElementById('filter-nude').value;
-  const gender = document.getElementById('filter-gender').value;
-  const openFilter = document.getElementById('filter-open').value;
-  const wishlist = document.getElementById('filter-wishlist').value;
+  const types = getFilterValues('filter-type');
+  const countries = getFilterValues('filter-country');
+  const nudeVals = getFilterValues('filter-nude');
+  const genderVals = getFilterValues('filter-gender');
+  const openVals = getFilterValues('filter-open');
+  const wishlistVals = getFilterValues('filter-wishlist');
 
   // Range filters
   const priceMin = parseInt(document.getElementById('price-min').value, 10);
@@ -1358,16 +1486,25 @@ function applyFilters() {
 
   filteredSaunas = saunas.filter(s => {
     if (search && !s.name.toLowerCase().includes(search) && !s.city.toLowerCase().includes(search) && !s.country.toLowerCase().includes(search)) return false;
-    if (type !== 'all' && s.type !== type) return false;
-    if (country !== 'all' && s.country !== country) return false;
-    if (nude === 'nude' && !s.nude) return false;
-    if (nude === 'clothed' && s.nude) return false;
-    if (gender !== 'all' && (s.gender || 'mixed') !== gender) return false;
-    if (openFilter === 'open' && isOpenNow(s.hours) !== true) return false;
-    if (wishlist === 'wishlist' && !profile.wishlist[s.id]) return false;
-    if (wishlist === 'visited' && !profile.ratings[s.id]) return false;
-    if (wishlist === 'community' && !s.communityAdded) return false;
-    if (wishlist === 'aufguss' && !s.aufguss) return false;
+    if (types.length && !types.includes(s.type)) return false;
+    if (countries.length && !countries.includes(s.country)) return false;
+    // Nude: if both selected, it's same as "any"
+    if (nudeVals.length) {
+      const match = nudeVals.some(v => (v === 'nude' && s.nude) || (v === 'clothed' && !s.nude));
+      if (!match) return false;
+    }
+    if (genderVals.length && !genderVals.includes(s.gender || 'mixed')) return false;
+    if (openVals.length && isOpenNow(s.hours) !== true) return false;
+    // Collection: OR logic — match any selected
+    if (wishlistVals.length) {
+      const match = wishlistVals.some(v =>
+        (v === 'wishlist' && profile.wishlist[s.id]) ||
+        (v === 'visited' && profile.ratings[s.id]) ||
+        (v === 'community' && s.communityAdded) ||
+        (v === 'aufguss' && s.aufguss)
+      );
+      if (!match) return false;
+    }
     // Price range filter
     if (priceMin > 0 || priceMax < 100) {
       const p = parsePriceRange(s.price);
@@ -1415,12 +1552,12 @@ function parsePriceApprox(priceStr) {
 // ── Filter badge ────────────────────────────
 function updateFilterBadge() {
   const activeCount = [
-    document.getElementById('filter-type').value !== 'all',
-    document.getElementById('filter-country').value !== 'all',
-    document.getElementById('filter-nude').value !== 'all',
-    document.getElementById('filter-gender').value !== 'all',
-    document.getElementById('filter-open').value !== 'all',
-    document.getElementById('filter-wishlist').value !== 'all',
+    getFilterValues('filter-type').length > 0,
+    getFilterValues('filter-country').length > 0,
+    getFilterValues('filter-nude').length > 0,
+    getFilterValues('filter-gender').length > 0,
+    getFilterValues('filter-open').length > 0,
+    getFilterValues('filter-wishlist').length > 0,
     parseInt(document.getElementById('price-min').value, 10) > 0,
     parseInt(document.getElementById('price-max').value, 10) < 100,
     parseInt(document.getElementById('min-score').value, 10) > 0,
@@ -1447,23 +1584,13 @@ function renderActivePills() {
 
   const add = (label, clearFn) => pills.push({ label, clearFn });
 
-  const type = document.getElementById('filter-type');
-  if (type.value !== 'all') add(type.options[type.selectedIndex].text, () => { type.value = 'all'; });
-
-  const country = document.getElementById('filter-country');
-  if (country.value !== 'all') add(country.options[country.selectedIndex].text, () => { country.value = 'all'; });
-
-  const nude = document.getElementById('filter-nude');
-  if (nude.value !== 'all') add(nude.options[nude.selectedIndex].text, () => { nude.value = 'all'; });
-
-  const gender = document.getElementById('filter-gender');
-  if (gender.value !== 'all') add(gender.options[gender.selectedIndex].text, () => { gender.value = 'all'; });
-
-  const open = document.getElementById('filter-open');
-  if (open.value !== 'all') add('Open Now', () => { open.value = 'all'; });
-
-  const wishlist = document.getElementById('filter-wishlist');
-  if (wishlist.value !== 'all') add(wishlist.options[wishlist.selectedIndex].text, () => { wishlist.value = 'all'; });
+  // One pill per selected value in each multi-select
+  const msFilters = ['filter-type', 'filter-country', 'filter-nude', 'filter-gender', 'filter-open', 'filter-wishlist'];
+  for (const id of msFilters) {
+    for (const val of getFilterValues(id)) {
+      add(getFilterLabel(id, val), () => { toggleFilterValue(id, val); });
+    }
+  }
 
   const priceMin = document.getElementById('price-min');
   const priceMax = document.getElementById('price-max');
@@ -1511,20 +1638,20 @@ function syncChipsFromFilters() {
   if (_syncingFilters) return;
   _syncingFilters = true;
 
-  const type = document.getElementById('filter-type').value;
-  const nude = document.getElementById('filter-nude').value;
-  const open = document.getElementById('filter-open').value;
-  const wishlist = document.getElementById('filter-wishlist').value;
+  const types = getFilterValues('filter-type');
+  const nudeVals = getFilterValues('filter-nude');
+  const openVals = getFilterValues('filter-open');
+  const wishlistVals = getFilterValues('filter-wishlist');
   const priceMin = parseInt(document.getElementById('price-min').value, 10);
   const minScore = parseInt(document.getElementById('min-score').value, 10);
 
   document.querySelectorAll('.chip').forEach(chip => {
     const key = chip.dataset.chip;
     let active = false;
-    if (key === 'wood-fired') active = type === 'wood-fired';
-    else if (key === 'nude') active = nude === 'nude';
-    else if (key === 'aufguss') active = wishlist === 'aufguss';
-    else if (key === 'open') active = open === 'open';
+    if (key === 'wood-fired') active = types.includes('wood-fired');
+    else if (key === 'nude') active = nudeVals.includes('nude');
+    else if (key === 'aufguss') active = wishlistVals.includes('aufguss');
+    else if (key === 'open') active = openVals.includes('open');
     else if (key === 'free') active = priceMin === 0 && parseInt(document.getElementById('price-max').value, 10) === 0;
     else if (key === 'score70') active = minScore >= 70;
     chip.classList.toggle('active', active);
@@ -1542,16 +1669,16 @@ function applyChip(chipKey) {
 
   switch (chipKey) {
     case 'wood-fired':
-      document.getElementById('filter-type').value = isActive ? 'all' : 'wood-fired';
+      toggleFilterValue('filter-type', 'wood-fired');
       break;
     case 'nude':
-      document.getElementById('filter-nude').value = isActive ? 'all' : 'nude';
+      toggleFilterValue('filter-nude', 'nude');
       break;
     case 'aufguss':
-      document.getElementById('filter-wishlist').value = isActive ? 'all' : 'aufguss';
+      toggleFilterValue('filter-wishlist', 'aufguss');
       break;
     case 'open':
-      document.getElementById('filter-open').value = isActive ? 'all' : 'open';
+      toggleFilterValue('filter-open', 'open');
       break;
     case 'free': {
       const pm = document.getElementById('price-min');
@@ -1587,12 +1714,9 @@ function clearBoundsAndRefresh(fitMap = false) {
 // ── Country filter population ────────────────
 function populateCountryFilter() {
   const countries = [...new Set(saunas.map(s => s.country))].sort();
-  const select = document.getElementById('filter-country');
-  for (const c of countries) {
-    const opt = document.createElement('option');
-    opt.value = c;
-    opt.textContent = c;
-    select.appendChild(opt);
+  if (_ms['filter-country']) {
+    _ms['filter-country'].options = countries.map(c => ({ value: c, label: c }));
+    _renderMSOptions('filter-country');
   }
 }
 
@@ -1610,12 +1734,7 @@ function fitMapToFiltered() {
 
 function clearAllFilters() {
   document.getElementById('search').value = '';
-  document.getElementById('filter-type').value = 'all';
-  document.getElementById('filter-country').value = 'all';
-  document.getElementById('filter-nude').value = 'all';
-  document.getElementById('filter-gender').value = 'all';
-  document.getElementById('filter-open').value = 'all';
-  document.getElementById('filter-wishlist').value = 'all';
+  ['filter-type', 'filter-country', 'filter-nude', 'filter-gender', 'filter-open', 'filter-wishlist'].forEach(id => setFilterValues(id, []));
   document.getElementById('price-min').value = 0;
   document.getElementById('price-max').value = 100;
   document.getElementById('min-score').value = 0;
@@ -2355,18 +2474,15 @@ function parseCSVLine(line) {
 
 // ── Country filter repopulation ─────────────
 function repopulateCountryFilter() {
-  const select = document.getElementById('filter-country');
-  const current = select.value;
-  select.innerHTML = '<option value="all">All Countries</option>';
   const countries = [...new Set(saunas.map(s => s.country))].sort();
-  for (const c of countries) {
-    const opt = document.createElement('option');
-    opt.value = c;
-    opt.textContent = c;
-    select.appendChild(opt);
+  if (_ms['filter-country']) {
+    const currentSelected = getFilterValues('filter-country');
+    _ms['filter-country'].options = countries.map(c => ({ value: c, label: c }));
+    // Restore valid selections
+    _ms['filter-country'].selected = new Set(currentSelected.filter(c => countries.includes(c)));
+    _renderMSOptions('filter-country');
+    _renderMSTrigger('filter-country');
   }
-  // Restore selection if still valid
-  if (countries.includes(current)) select.value = current;
 }
 
 // ── Init ─────────────────────────────────────
@@ -2381,6 +2497,7 @@ async function init() {
   }
   ensureProfileFields();
   initMap();
+  initAllMultiSelects();
   populateCountryFilter();
   setupListeners();
   refreshAll();
