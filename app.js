@@ -448,6 +448,14 @@ function initMap() {
       L.DomEvent.disableClickPropagation(wrapper);
 
       wrapper.innerHTML = `
+        <div class="map-toolbar-section map-toolbar-markers">
+          <div class="map-toolbar-marker-btns">
+            <button class="marker-toggle-btn" data-mode="score" title="Show scores">123</button>
+            <button class="marker-toggle-btn active" data-mode="type" title="Show types">&#9973;</button>
+            <button class="marker-toggle-btn" data-mode="nude" title="Show nude policy">&#127814;</button>
+          </div>
+        </div>
+        <div class="map-toolbar-divider"></div>
         <button class="map-toolbar-toggle" title="Map tools">&#9776;</button>
         <div class="map-toolbar-body">
           <div class="map-toolbar-section map-toolbar-nav">
@@ -455,15 +463,6 @@ function initMap() {
             <button class="map-tb-btn" data-action="showall" title="Show all saunas">&#8862; Show all</button>
             <button class="map-tb-btn" data-action="fit" title="Fit to filtered">&#9635; Fit filtered</button>
             <button class="map-tb-btn map-tb-search-area" data-action="area" title="Search this area" style="display:none">&#8981; Search this area</button>
-          </div>
-          <div class="map-toolbar-divider"></div>
-          <div class="map-toolbar-section map-toolbar-markers">
-            <span class="map-toolbar-label">Markers</span>
-            <div class="map-toolbar-marker-btns">
-              <button class="marker-toggle-btn" data-mode="score" title="Show scores">123</button>
-              <button class="marker-toggle-btn active" data-mode="type" title="Show types">&#9973;</button>
-              <button class="marker-toggle-btn" data-mode="nude" title="Show nude policy">&#127814;</button>
-            </div>
           </div>
         </div>
       `;
