@@ -869,6 +869,7 @@ function closeDetail() {
     map.flyTo(mapViewBeforeDetail.center, mapViewBeforeDetail.zoom, { duration: 0.6 });
     mapViewBeforeDetail = null;
   }
+  applyFilters();
   renderMarkers();
   renderList();
 }
@@ -1189,6 +1190,7 @@ function fitMapToSaunas() {
   mapBoundsFilter = null;
   if (searchAreaBtn) searchAreaBtn.style.display = 'none';
   map.flyToBounds(bounds, { padding: [40, 40], duration: 0.8 });
+  refreshAll();
 }
 
 function refreshAll(fitMap = false) {
@@ -1203,14 +1205,24 @@ function refreshAll(fitMap = false) {
 // ── Event Listeners ──────────────────────────
 function setupListeners() {
   // Search & filters
-  document.getElementById('search').addEventListener('input', refreshAll);
+  document.getElementById('search').addEventListener('input', () => {
+    mapBoundsFilter = null;
+    if (searchAreaBtn) searchAreaBtn.style.display = 'none';
+    refreshAll();
+  });
   document.getElementById('sort-by').addEventListener('change', refreshAll);
-  document.getElementById('filter-type').addEventListener('change', () => { updateFilterBadge(); refreshAll(); });
-  document.getElementById('filter-nude').addEventListener('change', () => { updateFilterBadge(); refreshAll(); });
-  document.getElementById('filter-gender').addEventListener('change', () => { updateFilterBadge(); refreshAll(); });
-  document.getElementById('filter-open').addEventListener('change', () => { updateFilterBadge(); refreshAll(); });
-  document.getElementById('filter-wishlist').addEventListener('change', () => { updateFilterBadge(); refreshAll(); });
-  document.getElementById('filter-country').addEventListener('change', () => { updateFilterBadge(); refreshAll(true); });
+  const clearBoundsAndRefresh = (fitMap = false) => {
+    mapBoundsFilter = null;
+    if (searchAreaBtn) searchAreaBtn.style.display = 'none';
+    updateFilterBadge();
+    refreshAll(fitMap);
+  };
+  document.getElementById('filter-type').addEventListener('change', () => clearBoundsAndRefresh());
+  document.getElementById('filter-nude').addEventListener('change', () => clearBoundsAndRefresh());
+  document.getElementById('filter-gender').addEventListener('change', () => clearBoundsAndRefresh());
+  document.getElementById('filter-open').addEventListener('change', () => clearBoundsAndRefresh());
+  document.getElementById('filter-wishlist').addEventListener('change', () => clearBoundsAndRefresh());
+  document.getElementById('filter-country').addEventListener('change', () => clearBoundsAndRefresh(true));
 
   // Filter drawer toggle
   document.getElementById('filter-toggle').addEventListener('click', () => {
