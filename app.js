@@ -1608,12 +1608,30 @@ function fitMapToFiltered() {
   map.flyToBounds(bounds, { padding: [40, 40], duration: 0.8 });
 }
 
+function clearAllFilters() {
+  document.getElementById('search').value = '';
+  document.getElementById('filter-type').value = 'all';
+  document.getElementById('filter-country').value = 'all';
+  document.getElementById('filter-nude').value = 'all';
+  document.getElementById('filter-gender').value = 'all';
+  document.getElementById('filter-open').value = 'all';
+  document.getElementById('filter-wishlist').value = 'all';
+  document.getElementById('price-min').value = 0;
+  document.getElementById('price-max').value = 100;
+  document.getElementById('min-score').value = 0;
+  updatePriceLabels();
+  updateScoreLabel();
+  syncChipsFromFilters();
+  mapBoundsFilter = null;
+  if (searchAreaBtn) searchAreaBtn.style.display = 'none';
+  updateFilterBadge();
+}
+
 function fitMapToSaunas() {
+  clearAllFilters();
   const withCoords = saunas.filter(s => s.lat != null && s.lng != null);
   if (withCoords.length === 0) return;
   const bounds = L.latLngBounds(withCoords.map(s => [s.lat, s.lng]));
-  mapBoundsFilter = null;
-  if (searchAreaBtn) searchAreaBtn.style.display = 'none';
   map.flyToBounds(bounds, { padding: [40, 40], duration: 0.8 });
   refreshAll();
 }
@@ -1716,21 +1734,7 @@ function setupListeners() {
 
   // Clear all filters
   document.getElementById('filter-clear').addEventListener('click', () => {
-    document.getElementById('filter-type').value = 'all';
-    document.getElementById('filter-country').value = 'all';
-    document.getElementById('filter-nude').value = 'all';
-    document.getElementById('filter-gender').value = 'all';
-    document.getElementById('filter-open').value = 'all';
-    document.getElementById('filter-wishlist').value = 'all';
-    document.getElementById('price-min').value = 0;
-    document.getElementById('price-max').value = 100;
-    document.getElementById('min-score').value = 0;
-    updatePriceLabels();
-    updateScoreLabel();
-    syncChipsFromFilters();
-    mapBoundsFilter = null;
-    if (searchAreaBtn) searchAreaBtn.style.display = 'none';
-    updateFilterBadge();
+    clearAllFilters();
     refreshAll();
   });
 
